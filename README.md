@@ -127,12 +127,13 @@ clang -O2 -emit-llvm -S out.ll -o out.opt.ll
 
 ---
 
-## Status
+## Goals
 
-Output is meant to be **read**, not reinserted (no 1:1 runnable binary yet).
-Working and tested: native CFG recovery, multi-path VM CFG (VMProtect-style,
-cmov/setcc VJCCs), full-SSA in the generic path. Not done: Themida's VM
-(rbp-VPC), full-SSA on the VM path, a native backend for reinsertion.
+- **Now** — native CFG recovery, multi-path VM CFG (VMProtect-style, cmov/setcc
+  VJCCs), and full-SSA on the generic path. All tested.
+- **Next** — Themida's VM (rbp-VPC), full-SSA on the VM path.
+- **Aim** — output that isn't just analyzable but reinsertable: rebuilt functions
+  that still run.
 
 ---
 

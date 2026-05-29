@@ -122,11 +122,12 @@ clang -O2 -emit-llvm -S out.ll -o out.opt.ll
 
 ---
 
-## 现状
+## 目标
 
-输出是给人**读**的，还不能回插（暂无 1:1 可运行二进制）。已做且有测试：原生 CFG
-恢复、多路径 VM CFG（VMProtect 形态、cmov/setcc VJCC）、通用路径的完整 SSA。未做：
-Themida 的 VM（rbp-VPC）、VM 路径的完整 SSA、回插用的原生后端。
+- **现在** —— 原生 CFG 恢复、多路径 VM CFG（VMProtect 形态、cmov/setcc VJCC）、
+  通用路径的完整 SSA。均有测试。
+- **下一步** —— Themida 的 VM（rbp-VPC）、VM 路径的完整 SSA。
+- **终极** —— 输出不止可分析，还能回插：重建出仍可运行的函数。
 
 ---
 
