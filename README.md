@@ -7,8 +7,8 @@ Give it a VM-protected (VMProtect / Themida / OLLVM / custom-VM) function and it
 hands back a clean control-flow graph and LLVM IR you can actually read.
 
 > Methodology: Guided Symbolic Evaluation (back.engineering) + LLVM-based
-> deobfuscation (SATURN). The guiding idea is simple — **obfuscation is a
-> compiler transform, so deobfuscation is a compiler optimization.**
+> deobfuscation (SATURN). The thesis is one line — **if obfuscation is
+> compiler-based, so is deobfuscation.**
 
 ---
 

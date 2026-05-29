@@ -7,7 +7,7 @@
 干净的控制流图和可读的 LLVM IR。
 
 > 方法论：Guided Symbolic Evaluation（back.engineering）+ 基于 LLVM 的去混淆
-> （SATURN）。核心思想很简单——**混淆是编译器变换，去混淆就是编译器优化。**
+> （SATURN）。一句话——**如果混淆基于编译器，那么去混淆也是。**
 
 ---
 
