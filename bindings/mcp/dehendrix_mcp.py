@@ -2,7 +2,7 @@
 """DeHendrix MCP server.
 
 Exposes the libdeobf / DeHendrix deobfuscation engine to MCP clients (AI agents,
-Cursor, etc.) as structured tools. Each tool shells out to the `dehex_cli`
+IDE assistants, etc.) as structured tools. Each tool shells out to the `dehex_cli`
 executable; `optimize_llvm` additionally runs `clang -O2` over emitted LLVM IR.
 
 Run as an MCP (stdio) server:

@@ -1,7 +1,7 @@
 # DeHendrix MCP server
 
-Exposes the DeHendrix deobfuscation engine to MCP clients (AI agents, Cursor,
-etc.). Each tool shells out to the `dehex_cli` executable; `optimize_llvm` /
+Exposes the DeHendrix deobfuscation engine to MCP clients (AI agents, IDE
+assistants, etc.). Each tool shells out to the `dehex_cli` executable; `optimize_llvm` /
 `vm_devirt_optimized` additionally run `clang -O2` over the emitted LLVM IR.
 
 ## Tools
