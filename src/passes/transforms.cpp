@@ -143,6 +143,17 @@ bool const_fold_pass(Function& f) {
                     changed = true;
                 }
             }
+        } else if (instr.op == Op::SELECT && instr.operands.size() == 3) {
+            // SELECT(cond, a, b): once the condition is constant, collapse to the
+            // chosen arm (PASSTHROUGH so a downstream pass forwards the value).
+            auto* c = get_const(instr.operands[0]);
+            if (c) {
+                Value chosen = c->value ? instr.operands[1] : instr.operands[2];
+                instr.annotations.emplace("folded_from", "SELECT");
+                instr.op = Op::PASSTHROUGH;
+                instr.operands = {chosen};
+                changed = true;
+            }
         }
     }
     return changed;

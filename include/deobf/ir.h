@@ -62,6 +62,7 @@ enum class Op : uint8_t {
     LOAD, STORE,
     CALL, RET, JMP, CJMP,
     PASSTHROUGH, NOP,
+    SELECT,   // SELECT(cond, a, b) => cond != 0 ? a : b  (models cmov / setcc-driven choices)
 };
 
 const char* op_name(Op op);

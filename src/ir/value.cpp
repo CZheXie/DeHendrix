@@ -50,6 +50,7 @@ const char* op_name(Op op) {
         case Op::CJMP:        return "CJMP";
         case Op::PASSTHROUGH: return "PASSTHROUGH";
         case Op::NOP:         return "NOP";
+        case Op::SELECT:      return "SELECT";
     }
     return "???";
 }

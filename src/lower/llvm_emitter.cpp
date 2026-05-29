@@ -163,6 +163,17 @@ void LLVMEmitter::emit_instr(const Instruction& instr, EmitCtx& ctx) {
             ctx.val_names[instr.result_id] = name;
             break;
         }
+        case Op::SELECT: {
+            if (instr.operands.size() == 3) {
+                std::string cmp = ctx.new_tmp();
+                ctx.os << "  %" << cmp << " = icmp ne i64 "
+                       << ctx.val_ref(instr.operands[0]) << ", 0\n";
+                ctx.os << "  %" << name << " = select i1 %" << cmp
+                       << ", i64 " << ctx.val_ref(instr.operands[1])
+                       << ", i64 " << ctx.val_ref(instr.operands[2]) << "\n";
+            }
+            break;
+        }
         case Op::NOP:
             ctx.os << "  %" << name << " = add i64 0, 0 ; nop\n";
             break;

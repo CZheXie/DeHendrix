@@ -47,6 +47,19 @@ static void test_vjcc_extract() {
     auto none = extract_vjcc_targets(g, InstrRef(2), InstrRef(1));
     CHECK(!none.has_value());
     std::cout << "  ok: cond-independent VPC -> no false branch\n";
+
+    // SELECT-form VJCC (cmov / setcc style): vpc = SELECT(cond, A, B)
+    Function s("vjcc_sel");
+    s.emit(Op::AND,    {SymReg("flags"), Const(8)});                  // %0 cond
+    s.emit(Op::SELECT, {InstrRef(0), Const(0x2000), Const(0x3000)});  // %1 vpc
+    auto sel = extract_vjcc_targets(s, InstrRef(1), InstrRef(0));
+    CHECK(sel.has_value());
+    if (sel) {
+        CHECK(sel->first == 0x2000);   // cond=1 -> arm A
+        CHECK(sel->second == 0x3000);  // cond=0 -> arm B
+        std::cout << "  ok: SELECT-form VJCC -> taken=0x" << std::hex << sel->first
+                  << " not_taken=0x" << sel->second << std::dec << "\n";
+    }
 }
 
 #ifdef DEOBF_HAS_CAPSTONE
@@ -94,6 +107,52 @@ static void test_injected_state() {
     CHECK(rax == 105);
     std::cout << "  ok: injected rax=100 + add 5 -> rax=" << rax << "\n";
 }
+
+// Lifter setcc/cmov -> SELECT, then VJCC extraction over the lifted IR.
+static void test_setcc_cmov_lift() {
+    // cmovne rax, rdx ; ret    (rax injected 0xAA, rdx 0xBB)
+    {
+        std::vector<uint8_t> img = { 0x48,0x0F,0x45,0xC2, 0xC3 };
+        ByteMemory mem;
+        std::unordered_map<std::string, Value> in = {
+            {"rax", Const(0xAA)}, {"rdx", Const(0xBB)}};
+        auto r = lift_and_optimize_segment(img.data(), img.size(), 0x140000000,
+                                           0x140000000, in, mem);
+        CHECK(r.stop == SegStop::Ret);
+        auto it = r.exit_regs.find("rax");
+        CHECK(it != r.exit_regs.end());
+        if (it != r.exit_regs.end()) {
+            auto tg = extract_vjcc_targets(r.func, it->second, SymReg("rflags"));
+            CHECK(tg.has_value());
+            if (tg) {
+                CHECK(tg->first == 0xBB);   // cond true  -> src (rdx)
+                CHECK(tg->second == 0xAA);  // cond false -> old (rax)
+                std::cout << "  ok: cmovne lift+extract -> {0x" << std::hex
+                          << tg->first << ",0x" << tg->second << "}" << std::dec << "\n";
+            }
+        }
+    }
+    // sete al ; ret
+    {
+        std::vector<uint8_t> img = { 0x0F,0x94,0xC0, 0xC3 };
+        ByteMemory mem;
+        auto r = lift_and_optimize_segment(img.data(), img.size(), 0x140000000,
+                                           0x140000000, {}, mem);
+        CHECK(r.stop == SegStop::Ret);
+        auto it = r.exit_regs.find("rax");
+        CHECK(it != r.exit_regs.end());
+        if (it != r.exit_regs.end()) {
+            auto tg = extract_vjcc_targets(r.func, it->second, SymReg("rflags"));
+            CHECK(tg.has_value());
+            if (tg) {
+                CHECK(tg->first == 1);
+                CHECK(tg->second == 0);
+                std::cout << "  ok: sete lift+extract -> {" << tg->first
+                          << "," << tg->second << "}\n";
+            }
+        }
+    }
+}
 #endif
 
 int main() {
@@ -102,6 +161,7 @@ int main() {
 #ifdef DEOBF_HAS_CAPSTONE
     test_straightline();
     test_injected_state();
+    test_setcc_cmov_lift();
 #endif
     if (g_fail) {
         std::cout << "\nSEGMENT-EVAL TESTS FAILED\n";

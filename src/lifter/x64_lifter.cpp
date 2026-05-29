@@ -231,6 +231,25 @@ void lift_insn(const cs_insn* insn, LiftState& state) {
         return;
     }
 
+    // inc / dec : modeled as +/- 1 (CF is left untouched by these on x86)
+    if ((mnem == "inc" || mnem == "dec") && op_count >= 1) {
+        Value a = op_value(insn, 0, state);
+        Op op = (mnem == "inc") ? Op::ADD : Op::SUB;
+        auto& result = state.emit(op, {a, Const(1)}, {{"va", va_str.str()}});
+        auto& dst = insn->detail->x86.operands[0];
+        if (dst.type == X86_OP_REG) {
+            state.set_reg(reg_name(static_cast<x86_reg>(dst.reg)), result.ref());
+        } else if (dst.type == X86_OP_MEM) {
+            Value base_val = dst.mem.base
+                ? state.get_reg(reg_name(static_cast<x86_reg>(dst.mem.base)))
+                : Value(Const(0));
+            Value disp_val = Const(static_cast<uint64_t>(dst.mem.disp) & MASK64);
+            auto& addr = state.emit(Op::ADD, {base_val, disp_val});
+            state.emit(Op::STORE, {addr.ref(), result.ref()}, {{"va", va_str.str()}});
+        }
+        return;
+    }
+
     if (mnem == "call" && op_count >= 1) {
         Value target = op_value(insn, 0, state);
         // x86-64 `call` pushes the return address (rsp -= 8; [rsp] = next_va).
@@ -346,6 +365,34 @@ void lift_insn(const cs_insn* insn, LiftState& state) {
             auto& dst = insn->detail->x86.operands[0];
             if (dst.type == X86_OP_REG)
                 state.set_reg(reg_name(static_cast<x86_reg>(dst.reg)), result.ref());
+        }
+        return;
+    }
+
+    // setcc dst : dst = (flag condition) ? 1 : 0, modeled as SELECT(rflags, 1, 0).
+    // The precise cc only labels which arm is "taken"; for VJCC target recovery
+    // both arms are extracted regardless.
+    if (mnem.rfind("set", 0) == 0 && mnem.size() > 3 && op_count >= 1) {
+        Value flags = state.get_reg("rflags");
+        auto& result = state.emit(Op::SELECT, {flags, Const(1), Const(0)},
+                                  {{"va", va_str.str()}, {"setcc", mnem}});
+        auto& dst = insn->detail->x86.operands[0];
+        if (dst.type == X86_OP_REG)
+            state.set_reg(reg_name(static_cast<x86_reg>(dst.reg)), result.ref());
+        return;
+    }
+
+    // cmovcc dst, src : dst = cond ? src : dst_old, modeled as SELECT(rflags, src, dst_old).
+    if (mnem.rfind("cmov", 0) == 0 && op_count >= 2) {
+        auto& dst = insn->detail->x86.operands[0];
+        if (dst.type == X86_OP_REG) {
+            Value src = op_value(insn, 1, state);
+            std::string dn = reg_name(static_cast<x86_reg>(dst.reg));
+            Value old = state.get_reg(dn);
+            Value flags = state.get_reg("rflags");
+            auto& result = state.emit(Op::SELECT, {flags, src, old},
+                                      {{"va", va_str.str()}, {"cmov", mnem}});
+            state.set_reg(dn, result.ref());
         }
         return;
     }

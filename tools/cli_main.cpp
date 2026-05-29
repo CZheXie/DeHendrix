@@ -3,6 +3,7 @@
 #include "deobf/evaluator.h"
 #include "deobf/pe_loader.h"
 #include "deobf/llvm_emitter.h"
+#include "deobf/segment_eval.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -17,7 +18,10 @@ static void usage(const char* prog) {
     std::cerr << "Usage:\n"
               << "  " << prog << " devirt --image <dump.bin> --base 0x140000000 "
               << "--entry 0x14132C758 [--vpc-reg r11] [--max-steps 50000] "
-              << "[--max-vm-insns 500] [--verbose]\n";
+              << "[--max-vm-insns 500] [--verbose]\n"
+              << "  " << prog << " cfg --image <file> [--base 0x140000000] "
+              << "[--entry 0x...] [--emit-llvm] [--llvm-out out.ll]\n"
+              << "      (native multi-block CFG recovery; --entry defaults to PE entry)\n";
 }
 
 static uint64_t parse_hex(const char* s) {
@@ -28,7 +32,7 @@ int main(int argc, char* argv[]) {
     if (argc < 2) { usage(argv[0]); return 1; }
 
     std::string cmd = argv[1];
-    if (cmd != "devirt") {
+    if (cmd != "devirt" && cmd != "cfg") {
         std::cerr << "Unknown command: " << cmd << "\n";
         usage(argv[0]);
         return 1;
@@ -57,8 +61,13 @@ int main(int argc, char* argv[]) {
         else if (arg == "--llvm-out" && i + 1 < argc) llvm_output = argv[++i];
     }
 
-    if (image_path.empty() || entry == 0) {
-        std::cerr << "Error: --image and --entry are required\n";
+    if (image_path.empty()) {
+        std::cerr << "Error: --image is required\n";
+        usage(argv[0]);
+        return 1;
+    }
+    if (cmd == "devirt" && entry == 0) {
+        std::cerr << "Error: --entry is required for devirt\n";
         usage(argv[0]);
         return 1;
     }
@@ -88,6 +97,31 @@ int main(int argc, char* argv[]) {
         std::cout << "=== dehex Guided Symbolic Evaluation (C++) ===\n";
         std::cout << "Image: " << image_path << " (raw dump, " << size << " bytes)\n";
     }
+    if (cmd == "cfg") {
+        if (entry == 0 && pe_opt) entry = base + pe_opt->entry_point_rva;
+        std::cout << "Mode: native multi-block CFG recovery\n";
+        std::cout << "Entry: 0x" << std::hex << entry << "\n\n";
+        if (entry == 0) {
+            std::cerr << "Error: no entry (provide --entry or a PE with an entry point)\n";
+            return 1;
+        }
+        CFGFunction cfg = recover_native_cfg(image.data(), image.size(), base, entry);
+        std::cout << "Recovered " << std::dec << cfg.blocks.size() << " blocks, "
+                  << cfg.edges.size() << " edges, " << cfg.total_instrs() << " IR instrs\n\n";
+        std::cout << cfg.dump() << "\n";
+        if (emit_llvm) {
+            std::string ll = LLVMEmitter::emit_cfg_function(cfg, "devirt_cfg");
+            if (llvm_output.empty()) {
+                std::cout << "\n=== LLVM IR ===\n" << ll;
+            } else {
+                std::ofstream ofs(llvm_output);
+                ofs << ll;
+                std::cout << "\nLLVM IR written to: " << llvm_output << "\n";
+            }
+        }
+        return 0;
+    }
+
     std::cout << "Entry: 0x" << std::hex << entry << "  VPC reg: " << vpc_reg << "\n";
     std::cout << "Limits: " << std::dec << max_steps << " steps, " << max_vm_insns << " VM insns\n\n";
 
