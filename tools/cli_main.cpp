@@ -21,7 +21,10 @@ static void usage(const char* prog) {
               << "[--max-vm-insns 500] [--verbose]\n"
               << "  " << prog << " cfg --image <file> [--base 0x140000000] "
               << "[--entry 0x...] [--emit-llvm] [--llvm-out out.ll]\n"
-              << "      (native multi-block CFG recovery; --entry defaults to PE entry)\n";
+              << "      (native multi-block CFG recovery; --entry defaults to PE entry)\n"
+              << "  " << prog << " vm-cfg --image <file> --entry 0x... [--base 0x140000000] "
+              << "[--vpc-reg r11] [--safe 0xSTART:0xEND ...] [--emit-llvm] [--llvm-out out.ll]\n"
+              << "      (multi-path VM devirtualization; --safe marks VM bytecode regions)\n";
 }
 
 static uint64_t parse_hex(const char* s) {
@@ -32,7 +35,7 @@ int main(int argc, char* argv[]) {
     if (argc < 2) { usage(argv[0]); return 1; }
 
     std::string cmd = argv[1];
-    if (cmd != "devirt" && cmd != "cfg") {
+    if (cmd != "devirt" && cmd != "cfg" && cmd != "vm-cfg") {
         std::cerr << "Unknown command: " << cmd << "\n";
         usage(argv[0]);
         return 1;
@@ -47,10 +50,20 @@ int main(int argc, char* argv[]) {
     bool verbose = false;
     bool emit_llvm = false;
     std::string llvm_output;
+    std::vector<std::pair<uint64_t, uint64_t>> safe_ranges;
 
     for (int i = 2; i < argc; ++i) {
         std::string arg = argv[i];
-        if (arg == "--image" && i + 1 < argc) image_path = argv[++i];
+        if (arg == "--safe" && i + 1 < argc) {
+            std::string s = argv[++i];
+            auto colon = s.find(':');
+            if (colon != std::string::npos) {
+                uint64_t a = parse_hex(s.substr(0, colon).c_str());
+                uint64_t b = parse_hex(s.substr(colon + 1).c_str());
+                if (b > a) safe_ranges.emplace_back(a, b);
+            }
+        }
+        else if (arg == "--image" && i + 1 < argc) image_path = argv[++i];
         else if (arg == "--base" && i + 1 < argc) base = parse_hex(argv[++i]);
         else if (arg == "--entry" && i + 1 < argc) entry = parse_hex(argv[++i]);
         else if (arg == "--vpc-reg" && i + 1 < argc) vpc_reg = argv[++i];
@@ -66,8 +79,8 @@ int main(int argc, char* argv[]) {
         usage(argv[0]);
         return 1;
     }
-    if (cmd == "devirt" && entry == 0) {
-        std::cerr << "Error: --entry is required for devirt\n";
+    if ((cmd == "devirt" || cmd == "vm-cfg") && entry == 0) {
+        std::cerr << "Error: --entry is required for " << cmd << "\n";
         usage(argv[0]);
         return 1;
     }
@@ -111,6 +124,39 @@ int main(int argc, char* argv[]) {
         std::cout << cfg.dump() << "\n";
         if (emit_llvm) {
             std::string ll = LLVMEmitter::emit_cfg_function(cfg, "devirt_cfg");
+            if (llvm_output.empty()) {
+                std::cout << "\n=== LLVM IR ===\n" << ll;
+            } else {
+                std::ofstream ofs(llvm_output);
+                ofs << ll;
+                std::cout << "\nLLVM IR written to: " << llvm_output << "\n";
+            }
+        }
+        return 0;
+    }
+
+    if (cmd == "vm-cfg") {
+        // Auto-add VM bytecode sections as safe ranges (in addition to --safe).
+        if (pe_opt) {
+            for (auto& sec : pe_opt->sections) {
+                if (sec.name.find("tvm") != std::string::npos ||
+                    sec.name.find("ytr") != std::string::npos ||
+                    sec.name.find("vmp") != std::string::npos) {
+                    uint64_t s = base + sec.virtual_address;
+                    safe_ranges.emplace_back(s, s + sec.virtual_size);
+                }
+            }
+        }
+        std::cout << "Mode: multi-path VM devirtualization\n";
+        std::cout << "Entry: 0x" << std::hex << entry << "  VPC reg: " << vpc_reg << "\n";
+        std::cout << "Safe ranges: " << std::dec << safe_ranges.size() << "\n\n";
+        CFGFunction cfg = recover_vm_cfg(image.data(), image.size(), base, vpc_reg,
+                                         entry, safe_ranges);
+        std::cout << "Recovered " << std::dec << cfg.blocks.size() << " blocks, "
+                  << cfg.edges.size() << " edges, " << cfg.total_instrs() << " IR instrs\n\n";
+        std::cout << cfg.dump() << "\n";
+        if (emit_llvm) {
+            std::string ll = LLVMEmitter::emit_cfg_function(cfg, "devirt_vm");
             if (llvm_output.empty()) {
                 std::cout << "\n=== LLVM IR ===\n" << ll;
             } else {
