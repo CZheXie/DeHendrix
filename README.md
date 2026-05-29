@@ -13,11 +13,13 @@ is a compiler pass, so is deobfuscation.
 
 ## What it does
 
-A virtualizer turns a function into bytecode plus an interpreter (dispatcher +
-handlers). Reversing handlers by hand doesn't scale — they get reshuffled every
-version. DeHendrix lifts the native code to SSA IR and runs compiler-style passes
-that fold the interpreter away. The only VM-specific part is control flow:
-virtual branches and VM exit.
+A VM protector compiles the function to bytecode and ships an interpreter to run
+it. Reversing handlers one by one is pointless — they change every version.
+
+DeHendrix ignores the handlers. It lifts the whole native blob to SSA IR and runs
+constant folding, memory forwarding and dead-code elimination; the dispatch and
+the stack machine fold away, leaving the original semantics. VM knowledge is used
+in exactly one place: spotting virtual branches and VM exit.
 
 ---
 
