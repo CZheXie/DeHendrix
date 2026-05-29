@@ -264,7 +264,31 @@ std::string LLVMEmitter::emit_cfg_function(const CFGFunction& f,
     ctx.os << "; ModuleID = 'dehex_devirt'\n";
     ctx.os << "source_filename = \"dehex_devirt\"\n\n";
     ctx.os << "declare i64 @external_call(i64)\n\n";
-    ctx.os << "define i64 @" << func_name << "() {\n";
+
+    // Collect symbolic registers used anywhere in the function; they become the
+    // function's parameters so the emitted module is valid (self-contained) IR.
+    std::vector<std::string> sym_regs;
+    auto add_sym = [&](const Value& v) {
+        if (const auto* sr = std::get_if<SymReg>(&v)) {
+            if (!sr->name.empty() &&
+                std::find(sym_regs.begin(), sym_regs.end(), sr->name) == sym_regs.end())
+                sym_regs.push_back(sr->name);
+        }
+    };
+    for (auto& bb : f.blocks) {
+        for (auto& phi : bb.phis)
+            for (auto& inc : phi.incoming) add_sym(inc.second);
+        for (auto& instr : bb.instrs)
+            for (auto& op : instr.operands) add_sym(op);
+        if (bb.term.condition) add_sym(*bb.term.condition);
+    }
+
+    ctx.os << "define i64 @" << func_name << "(";
+    for (size_t i = 0; i < sym_regs.size(); ++i) {
+        if (i > 0) ctx.os << ", ";
+        ctx.os << "i64 %" << sym_regs[i];
+    }
+    ctx.os << ") {\n";
 
     for (auto& bb : f.blocks) {
         ctx.os << bb.label << ":\n";
