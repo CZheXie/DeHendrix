@@ -28,6 +28,7 @@ struct VJCCBranch {
 };
 
 enum class EvalResult {
+    IN_PROGRESS = 0,
     RET,
     VMEXIT_RET,
     VMEXIT_CALL,

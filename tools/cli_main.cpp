@@ -1,6 +1,8 @@
 #include "deobf/ir.h"
 #include "deobf/passes.h"
 #include "deobf/evaluator.h"
+#include "deobf/pe_loader.h"
+#include "deobf/llvm_emitter.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -39,6 +41,8 @@ int main(int argc, char* argv[]) {
     int max_steps = 50000;
     int max_vm_insns = 500;
     bool verbose = false;
+    bool emit_llvm = false;
+    std::string llvm_output;
 
     for (int i = 2; i < argc; ++i) {
         std::string arg = argv[i];
@@ -49,6 +53,8 @@ int main(int argc, char* argv[]) {
         else if (arg == "--max-steps" && i + 1 < argc) max_steps = std::atoi(argv[++i]);
         else if (arg == "--max-vm-insns" && i + 1 < argc) max_vm_insns = std::atoi(argv[++i]);
         else if (arg == "--verbose") verbose = true;
+        else if (arg == "--emit-llvm") emit_llvm = true;
+        else if (arg == "--llvm-out" && i + 1 < argc) llvm_output = argv[++i];
     }
 
     if (image_path.empty() || entry == 0) {
@@ -64,15 +70,43 @@ int main(int argc, char* argv[]) {
     }
     auto size = file.tellg();
     file.seekg(0);
-    std::vector<uint8_t> image(size);
-    file.read(reinterpret_cast<char*>(image.data()), size);
+    std::vector<uint8_t> raw_data(size);
+    file.read(reinterpret_cast<char*>(raw_data.data()), size);
 
-    std::cout << "=== dehex Guided Symbolic Evaluation (C++) ===\n";
-    std::cout << "Image: " << image_path << " (" << size << " bytes)\n";
+    std::vector<uint8_t> image;
+    auto pe_opt = PELoader::parse(raw_data.data(), raw_data.size());
+    if (pe_opt) {
+        image = PELoader::load_image(raw_data.data(), raw_data.size(), *pe_opt);
+        base = pe_opt->image_base;
+        std::cout << "=== dehex Guided Symbolic Evaluation (C++) ===\n";
+        std::cout << "Image: " << image_path << " (PE, " << size << " raw, "
+                  << image.size() << " mapped)\n";
+        std::cout << "ImageBase: 0x" << std::hex << base << "  Sections: "
+                  << std::dec << pe_opt->sections.size() << "\n";
+    } else {
+        image = std::move(raw_data);
+        std::cout << "=== dehex Guided Symbolic Evaluation (C++) ===\n";
+        std::cout << "Image: " << image_path << " (raw dump, " << size << " bytes)\n";
+    }
     std::cout << "Entry: 0x" << std::hex << entry << "  VPC reg: " << vpc_reg << "\n";
     std::cout << "Limits: " << std::dec << max_steps << " steps, " << max_vm_insns << " VM insns\n\n";
 
     GuidedEvaluator ev(image.data(), image.size(), base, vpc_reg);
+
+    if (pe_opt) {
+        for (auto& sec : pe_opt->sections) {
+            if (sec.name.find("tvm") != std::string::npos ||
+                sec.name.find("ytr") != std::string::npos ||
+                sec.name.find("vmp") != std::string::npos) {
+                uint64_t start = base + sec.virtual_address;
+                uint64_t end = start + sec.virtual_size;
+                ev.add_safe_range(start, end);
+                if (verbose)
+                    std::cout << "Safe range: [0x" << std::hex << start
+                              << ", 0x" << end << ") (" << sec.name << ")\n";
+            }
+        }
+    }
     auto report = ev.run(entry, max_steps, max_vm_insns);
 
     std::cout << "Result: " << eval_result_name(report.result) << "\n";
@@ -105,6 +139,17 @@ int main(int argc, char* argv[]) {
         size_t start = f.instrs.size() > 30 ? f.instrs.size() - 30 : 0;
         for (size_t i = start; i < f.instrs.size(); ++i)
             std::cout << "  " << f.instrs[i].to_string() << "\n";
+    }
+
+    if (emit_llvm) {
+        std::string ll = LLVMEmitter::emit_function(ev.func(), "devirt");
+        if (llvm_output.empty()) {
+            std::cout << "\n=== LLVM IR ===\n" << ll;
+        } else {
+            std::ofstream ofs(llvm_output);
+            ofs << ll;
+            std::cout << "\nLLVM IR written to: " << llvm_output << "\n";
+        }
     }
 
     return 0;

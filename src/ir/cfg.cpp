@@ -77,6 +77,7 @@ std::string CFGFunction::dump() const {
         os << "  " << bb.label << " (id=" << bb.id << "):\n";
         for (auto& phi : bb.phis) {
             os << "    %v" << phi.result_id << " = PHI";
+            if (!phi.reg.empty()) os << " <" << phi.reg << ">";
             for (auto& [bid, val] : phi.incoming)
                 os << " [bb" << bid << ": " << value_to_string(val) << "]";
             os << "\n";

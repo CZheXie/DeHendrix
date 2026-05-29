@@ -1,4 +1,5 @@
 #include "deobf/llvm_emitter.h"
+#include "deobf/passes.h"
 #include <iomanip>
 
 namespace deobf {
@@ -9,13 +10,31 @@ std::string LLVMEmitter::EmitCtx::val_ref(const Value& v) {
         if constexpr (std::is_same_v<T, Const>) {
             return std::to_string(arg.value);
         } else if constexpr (std::is_same_v<T, SymReg>) {
+            if (arg.name.empty()) return "0";
             return "%" + arg.name;
         } else if constexpr (std::is_same_v<T, SymMem>) {
             return "%mem_" + std::to_string(arg.addr_ref);
         } else if constexpr (std::is_same_v<T, InstrRef>) {
             auto it = val_names.find(arg.id);
-            if (it != val_names.end()) return "%" + it->second;
-            return "%v" + std::to_string(arg.id);
+            if (it != val_names.end()) {
+                auto& name = it->second;
+                if (!name.empty() && (std::isdigit(name[0]) || name[0] == '-'))
+                    return name;
+                if (!name.empty())
+                    return "%" + name;
+            }
+            // Fallback: resolve through instr_map if available
+            if (instr_map) {
+                Value resolved = resolve(Value(InstrRef(arg.id)), *instr_map);
+                auto* c = get_const(resolved);
+                if (c) return std::to_string(c->value);
+                auto* sr = std::get_if<SymReg>(&resolved);
+                if (sr && !sr->name.empty()) return "%" + sr->name;
+                // Instruction was eliminated - use 0 as fallback
+                if (instr_map->find(arg.id) == instr_map->end())
+                    return "0";
+            }
+            return "0";
         }
     }, v);
 }
@@ -46,15 +65,15 @@ void LLVMEmitter::emit_instr(const Instruction& instr, EmitCtx& ctx) {
     switch (instr.op) {
         case Op::CONST:
         case Op::CONST_PTR: {
-            // Constants are inlined in LLVM IR, no explicit instruction needed.
-            // But we register the mapping so references work.
             if (!instr.operands.empty()) {
-                auto* c = as_const(instr.operands[0]);
+                auto* c = get_const(instr.operands[0]);
                 if (c) {
-                    // No instruction emitted; const is used inline
+                    ctx.os << "  %" << name << " = add i64 "
+                           << std::to_string(c->value) << ", 0\n";
                     return;
                 }
             }
+            ctx.os << "  %" << name << " = add i64 0, 0\n";
             break;
         }
         case Op::ADD: case Op::SUB: case Op::MUL:
@@ -97,7 +116,7 @@ void LLVMEmitter::emit_instr(const Instruction& instr, EmitCtx& ctx) {
                 std::string addr_tmp = ctx.new_tmp();
                 ctx.os << "  %" << addr_tmp << " = inttoptr i64 "
                        << ctx.val_ref(instr.operands[0]) << " to ptr\n";
-                ctx.os << "  store i64 " << ctx.val_ref(instr.operands[1])
+                ctx.os << "  store volatile i64 " << ctx.val_ref(instr.operands[1])
                        << ", ptr %" << addr_tmp << "\n";
             }
             break;
@@ -120,24 +139,39 @@ void LLVMEmitter::emit_instr(const Instruction& instr, EmitCtx& ctx) {
         }
         case Op::PASSTHROUGH: {
             if (instr.operands.size() == 1) {
-                // Identity: just alias the value
-                auto* c = as_const(instr.operands[0]);
+                auto* c = get_const(instr.operands[0]);
                 if (c) {
-                    // const passthrough: register as constant inline
+                    ctx.val_names[instr.result_id] = std::to_string(c->value);
                     return;
                 }
-                auto* ref = as_instrref(instr.operands[0]);
+                auto* ref = get_instrref(instr.operands[0]);
                 if (ref) {
-                    ctx.val_names[instr.result_id] = ctx.val_names[ref->id];
+                    auto it = ctx.val_names.find(ref->id);
+                    if (it != ctx.val_names.end() && !it->second.empty()) {
+                        ctx.val_names[instr.result_id] = it->second;
+                    } else {
+                        ctx.val_names[instr.result_id] = "v" + std::to_string(ref->id);
+                    }
+                    return;
+                }
+                auto* sr = std::get_if<SymReg>(&instr.operands[0]);
+                if (sr) {
+                    ctx.val_names[instr.result_id] = sr->name.empty() ? "unk" : sr->name;
                     return;
                 }
             }
+            ctx.val_names[instr.result_id] = name;
             break;
         }
         case Op::NOP:
+            ctx.os << "  %" << name << " = add i64 0, 0 ; nop\n";
+            break;
+        case Op::JMP:
+        case Op::CJMP:
+            ctx.os << "  %" << name << " = add i64 0, 0 ; " << op_name(instr.op) << "\n";
             break;
         default:
-            ctx.os << "  ; unsupported op: " << op_name(instr.op) << "\n";
+            ctx.os << "  %" << name << " = add i64 0, 0 ; unsupported: " << op_name(instr.op) << "\n";
             break;
     }
 }
@@ -145,7 +179,7 @@ void LLVMEmitter::emit_instr(const Instruction& instr, EmitCtx& ctx) {
 std::string LLVMEmitter::emit_function(const Function& f,
                                         const std::string& func_name) {
     EmitCtx ctx;
-    ctx.os << "; ModuleID = 'dehex_devirt'\n";
+    ctx.os << "; ModuleID = 'dehex_devirt_v2'\n";
     ctx.os << "source_filename = \"dehex_devirt\"\n\n";
     ctx.os << "declare i64 @external_call(i64)\n\n";
     ctx.os << "define i64 @" << func_name << "(";
@@ -168,6 +202,35 @@ std::string LLVMEmitter::emit_function(const Function& f,
     }
     ctx.os << ") {\n";
     ctx.os << "entry:\n";
+
+    // Build instruction map and resolve all InstrRef operands to their final values
+    auto im = build_instr_map(f);
+    ctx.instr_map = &im;
+    // Pre-register all resolvable instruction results
+    for (auto& instr : f.instrs) {
+        if (instr.op == Op::NOP) continue;
+        if (instr.op == Op::PASSTHROUGH && instr.operands.size() == 1) {
+            Value resolved = resolve(instr.operands[0], im);
+            auto* c = get_const(resolved);
+            if (c) { ctx.val_names[instr.result_id] = std::to_string(c->value); continue; }
+            auto* sr = std::get_if<SymReg>(&resolved);
+            if (sr && !sr->name.empty()) { ctx.val_names[instr.result_id] = sr->name; continue; }
+        }
+        if ((instr.op == Op::CONST || instr.op == Op::CONST_PTR) && !instr.operands.empty()) {
+            auto* c = get_const(instr.operands[0]);
+            if (c) { ctx.val_names[instr.result_id] = std::to_string(c->value); continue; }
+        }
+        // For NOPped/const-folded instructions that are still referenced
+        if (instr.op == Op::CONST && instr.operands.empty()) {
+            ctx.val_names[instr.result_id] = "0";
+        }
+    }
+    // Also resolve any NOP'd instructions that are referenced
+    for (auto& instr : f.instrs) {
+        if (instr.op != Op::NOP) continue;
+        if (ctx.val_names.count(instr.result_id)) continue;
+        ctx.val_names[instr.result_id] = "0";
+    }
 
     for (auto& instr : f.instrs) {
         emit_instr(instr, ctx);

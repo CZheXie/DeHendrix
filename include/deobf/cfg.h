@@ -1,6 +1,7 @@
 #pragma once
 #include "deobf/ir.h"
 #include <cstdint>
+#include <deque>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -26,7 +27,8 @@ struct Terminator {
 
 struct PhiNode {
     uint32_t result_id;
-    std::vector<std::pair<uint32_t, Value>> incoming; // (block_id, value)
+    std::string reg;                                   // VM register this phi reconciles ("" if N/A)
+    std::vector<std::pair<uint32_t, Value>> incoming;  // (block_id, value)
 };
 
 struct BasicBlock {
@@ -49,7 +51,10 @@ struct Edge {
 class CFGFunction {
 public:
     std::string name;
-    std::vector<BasicBlock> blocks;
+    // deque (not vector): add_block() returns references/the engine holds
+    // pointers to blocks while more blocks are appended; deque keeps element
+    // addresses stable across push_back, vector does not.
+    std::deque<BasicBlock> blocks;
     std::vector<Edge> edges;
     uint32_t entry_block = 0;
 

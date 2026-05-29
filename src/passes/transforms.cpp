@@ -1,6 +1,11 @@
 #include "deobf/passes.h"
 #include <algorithm>
+#include <optional>
 #include <unordered_set>
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 namespace deobf {
 
@@ -17,14 +22,14 @@ Value resolve(const Value& operand,
               const std::unordered_map<uint32_t, const Instruction*>& by_id) {
     Value cur = operand;
     for (;;) {
-        auto* ref = as_instrref(cur);
+        auto* ref = get_instrref(cur);
         if (!ref) return cur;
         auto it = by_id.find(ref->id);
         if (it == by_id.end()) return cur;
         auto* def = it->second;
         if ((def->op == Op::CONST || def->op == Op::CONST_PTR) &&
             !def->operands.empty()) {
-            auto* c = as_const(def->operands[0]);
+            auto* c = get_const(def->operands[0]);
             if (c) return *c;
             return cur;
         }
@@ -50,7 +55,7 @@ bool const_promote_pass(Function& f) {
         for (auto& op : instr.operands) {
             if (!is_instrref(op)) continue;
             Value resolved = resolve(op, im);
-            if (is_const(resolved) && !(resolved == op)) {
+            if (!(resolved == op)) {
                 op = resolved;
                 changed = true;
             }
@@ -79,7 +84,11 @@ static uint64_t sar64(uint64_t v, uint64_t n) {
 }
 
 static uint64_t bswap64(uint64_t v) {
+#ifdef _MSC_VER
+    return _byteswap_uint64(v);
+#else
     return __builtin_bswap64(v);
+#endif
 }
 
 static std::optional<uint64_t> fold_binary(Op op, uint64_t a, uint64_t b) {
@@ -112,8 +121,8 @@ bool const_fold_pass(Function& f) {
     bool changed = false;
     for (auto& instr : f.instrs) {
         if (op_is_foldable_binary(instr.op) && instr.operands.size() == 2) {
-            auto* a = as_const(instr.operands[0]);
-            auto* b = as_const(instr.operands[1]);
+            auto* a = get_const(instr.operands[0]);
+            auto* b = get_const(instr.operands[1]);
             if (a && b) {
                 auto folded = fold_binary(instr.op, a->value, b->value);
                 if (folded) {
@@ -124,7 +133,7 @@ bool const_fold_pass(Function& f) {
                 }
             }
         } else if (op_is_foldable_unary(instr.op) && instr.operands.size() == 1) {
-            auto* a = as_const(instr.operands[0]);
+            auto* a = get_const(instr.operands[0]);
             if (a) {
                 auto folded = fold_unary(instr.op, a->value);
                 if (folded) {
@@ -143,25 +152,44 @@ bool const_fold_pass(Function& f) {
 
 bool mem_forward_pass(Function& f) {
     bool changed = false;
-    std::unordered_map<uint64_t, Value> last_store;
+    std::unordered_map<uint64_t, Value> last_store_const;
+    std::unordered_map<uint32_t, Value> last_store_ref;
+
     for (auto& instr : f.instrs) {
         if (instr.op == Op::STORE && instr.operands.size() == 2) {
-            auto* addr = as_const(instr.operands[0]);
-            if (addr) last_store[addr->value] = instr.operands[1];
-        } else if (instr.op == Op::LOAD && instr.operands.size() == 1 &&
-                   has_ann(instr, "vm_private", "1")) {
-            auto* addr = as_const(instr.operands[0]);
+            auto* addr = get_const(instr.operands[0]);
             if (addr) {
-                auto it = last_store.find(addr->value);
-                if (it != last_store.end()) {
-                    if (is_const(it->second)) {
+                last_store_const[addr->value] = instr.operands[1];
+            } else {
+                auto* ref = get_instrref(instr.operands[0]);
+                if (ref) last_store_ref[ref->id] = instr.operands[1];
+            }
+        } else if (instr.op == Op::LOAD && instr.operands.size() == 1) {
+            auto* addr = get_const(instr.operands[0]);
+            if (addr) {
+                auto it = last_store_const.find(addr->value);
+                if (it != last_store_const.end()) {
+                    if (is_const(it->second))
                         instr.op = Op::CONST;
-                    } else {
+                    else
                         instr.op = Op::PASSTHROUGH;
-                    }
                     instr.operands = {it->second};
                     instr.annotations["forwarded"] = "1";
                     changed = true;
+                }
+            } else {
+                auto* ref = get_instrref(instr.operands[0]);
+                if (ref) {
+                    auto it = last_store_ref.find(ref->id);
+                    if (it != last_store_ref.end()) {
+                        if (is_const(it->second))
+                            instr.op = Op::CONST;
+                        else
+                            instr.op = Op::PASSTHROUGH;
+                        instr.operands = {it->second};
+                        instr.annotations["forwarded"] = "1";
+                        changed = true;
+                    }
                 }
             }
         }
@@ -178,11 +206,11 @@ bool dead_store_elim_pass(Function& f) {
         auto& instr = f.instrs[i];
         if (instr.op == Op::LOAD && has_ann(instr, "vm_private", "1") &&
             !instr.operands.empty()) {
-            auto* c = as_const(instr.operands[0]);
+            auto* c = get_const(instr.operands[0]);
             if (c) live.insert(c->value);
         } else if (instr.op == Op::STORE && has_ann(instr, "vm_private", "1") &&
                    instr.operands.size() >= 2) {
-            auto* c = as_const(instr.operands[0]);
+            auto* c = get_const(instr.operands[0]);
             if (c) {
                 if (live.count(c->value)) {
                     live.erase(c->value);
@@ -210,7 +238,7 @@ bool dead_dep_elim_pass(Function& f) {
     std::unordered_set<uint32_t> referenced;
     for (auto& instr : f.instrs) {
         for (auto& op : instr.operands) {
-            auto* ref = as_instrref(op);
+            auto* ref = get_instrref(op);
             if (ref) referenced.insert(ref->id);
         }
     }
@@ -253,7 +281,7 @@ bool insn_combine_pass(Function& f) {
                 changed = true; continue;
             }
             // x & 0 = 0, x * 0 = 0
-            auto* cb = as_const(rb);
+            auto* cb = get_const(rb);
             if (cb && cb->value == 0 &&
                 (instr.op == Op::AND || instr.op == Op::MUL)) {
                 instr.op = Op::CONST; instr.operands = {Const(0)};
@@ -283,7 +311,7 @@ bool insn_combine_pass(Function& f) {
         }
         // NOT(NOT(x)), NEG(NEG(x)), BSWAP(BSWAP(x))
         if (instr.operands.size() == 1) {
-            auto* ref = as_instrref(instr.operands[0]);
+            auto* ref = get_instrref(instr.operands[0]);
             if (ref) {
                 auto it = im.find(ref->id);
                 if (it != im.end()) {
@@ -297,6 +325,57 @@ bool insn_combine_pass(Function& f) {
                 }
             }
         }
+
+        // MBA: OR(XOR(AND(x,y), y), y) = y
+        // Pattern: (a AND b) XOR b OR b = b
+        if (instr.op == Op::OR && instr.operands.size() == 2) {
+            for (int swap = 0; swap < 2; ++swap) {
+                const Value& or_a = swap ? instr.operands[1] : instr.operands[0];
+                const Value& or_b = swap ? instr.operands[0] : instr.operands[1];
+                auto* xor_ref = get_instrref(or_a);
+                if (!xor_ref) continue;
+                auto xit = im.find(xor_ref->id);
+                if (xit == im.end() || xit->second->op != Op::XOR) continue;
+                auto& xor_instr = *xit->second;
+                if (xor_instr.operands.size() != 2) continue;
+                // Check XOR(something, or_b)
+                int xor_b_idx = -1;
+                if (xor_instr.operands[1] == or_b) xor_b_idx = 1;
+                else if (xor_instr.operands[0] == or_b) xor_b_idx = 0;
+                if (xor_b_idx < 0) continue;
+                const Value& xor_other = xor_instr.operands[1 - xor_b_idx];
+                auto* and_ref = get_instrref(xor_other);
+                if (!and_ref) continue;
+                auto ait = im.find(and_ref->id);
+                if (ait == im.end() || ait->second->op != Op::AND) continue;
+                auto& and_instr = *ait->second;
+                if (and_instr.operands.size() != 2) continue;
+                // Check AND(?, or_b) — one operand must be or_b
+                if (and_instr.operands[0] == or_b || and_instr.operands[1] == or_b) {
+                    instr.op = Op::PASSTHROUGH;
+                    instr.operands = {or_b};
+                    instr.annotations["mba_simplified"] = "and_xor_or";
+                    changed = true;
+                    break;
+                }
+            }
+        }
+
+        // MBA: XOR(AND(x,y), y) OR y = y  (alternate order detection)
+        // Also: OR(a,b) where a = XOR(b, AND(x,b)) → b
+        if (instr.op == Op::OR && instr.operands.size() == 2) {
+            for (int swap = 0; swap < 2; ++swap) {
+                const Value& or_a = swap ? instr.operands[1] : instr.operands[0];
+                const Value& or_b = swap ? instr.operands[0] : instr.operands[1];
+                // Check if or_a == or_b (x | x = x)
+                if (or_a == or_b) {
+                    instr.op = Op::PASSTHROUGH;
+                    instr.operands = {or_b};
+                    changed = true;
+                    break;
+                }
+            }
+        }
     }
     return changed;
 }
@@ -307,7 +386,7 @@ bool branch_fold_pass(Function& f) {
     bool changed = false;
     for (auto& instr : f.instrs) {
         if (instr.op == Op::CJMP && !instr.operands.empty()) {
-            auto* c = as_const(instr.operands[0]);
+            auto* c = get_const(instr.operands[0]);
             if (c) {
                 instr.op = c->value ? Op::JMP : Op::NOP;
                 instr.operands.erase(instr.operands.begin());
@@ -355,7 +434,7 @@ bool dead_dep_analysis_pass(Function& f,
         auto it = im.find(id);
         if (it == im.end()) continue;
         for (auto& op : it->second->operands) {
-            auto* ref = as_instrref(op);
+            auto* ref = get_instrref(op);
             if (ref && !reachable.count(ref->id)) {
                 reachable.insert(ref->id);
                 worklist.push_back(ref->id);
@@ -393,7 +472,7 @@ bool stack_rewrite_pass(Function& f, uint64_t init_rsp) {
         if (instr.op != Op::LOAD && instr.op != Op::STORE) continue;
         if (instr.operands.empty()) continue;
 
-        auto* addr = as_const(instr.operands[0]);
+        auto* addr = get_const(instr.operands[0]);
         if (!addr) continue;
 
         // Check if address is in reasonable stack range (init_rsp - 0x10000 to init_rsp + 0x100)

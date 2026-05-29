@@ -2,6 +2,7 @@
 #include "deobf/passes.h"
 #include "deobf/llvm_emitter.h"
 
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <iomanip>

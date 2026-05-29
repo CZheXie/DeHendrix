@@ -1,0 +1,2398 @@
+{
+  "binary": "ACE-BASE.sys",
+  "target_section": ".tvm0",
+  "target_va_range": [
+    "0x1403bc000",
+    "0x1406a8000"
+  ],
+  "n_sites": 298,
+  "n_distinct_targets": 298,
+  "entries": [
+    {
+      "site": "0x140002660",
+      "site_section": ".text",
+      "target": "0x14043ec4e",
+      "op": "jmp",
+      "bytes": "e9e9c54300"
+    },
+    {
+      "site": "0x140002700",
+      "site_section": ".text",
+      "target": "0x14044bd41",
+      "op": "jmp",
+      "bytes": "e93c964400"
+    },
+    {
+      "site": "0x140002930",
+      "site_section": ".text",
+      "target": "0x14048bddc",
+      "op": "jmp",
+      "bytes": "e9a7944800"
+    },
+    {
+      "site": "0x140002950",
+      "site_section": ".text",
+      "target": "0x14048be55",
+      "op": "jmp",
+      "bytes": "e900954800"
+    },
+    {
+      "site": "0x140002990",
+      "site_section": ".text",
+      "target": "0x14048bf22",
+      "op": "jmp",
+      "bytes": "e98d954800"
+    },
+    {
+      "site": "0x140002a10",
+      "site_section": ".text",
+      "target": "0x14048bf6d",
+      "op": "jmp",
+      "bytes": "e958954800"
+    },
+    {
+      "site": "0x140002b00",
+      "site_section": ".text",
+      "target": "0x14048c206",
+      "op": "jmp",
+      "bytes": "e901974800"
+    },
+    {
+      "site": "0x140002e20",
+      "site_section": ".text",
+      "target": "0x14048c7b7",
+      "op": "jmp",
+      "bytes": "e992994800"
+    },
+    {
+      "site": "0x140003090",
+      "site_section": ".text",
+      "target": "0x14048cf02",
+      "op": "jmp",
+      "bytes": "e96d9e4800"
+    },
+    {
+      "site": "0x1400030e0",
+      "site_section": ".text",
+      "target": "0x14048cfbb",
+      "op": "jmp",
+      "bytes": "e9d69e4800"
+    },
+    {
+      "site": "0x1400035b0",
+      "site_section": ".text",
+      "target": "0x14047d41a",
+      "op": "jmp",
+      "bytes": "e9659e4700"
+    },
+    {
+      "site": "0x140004390",
+      "site_section": ".text",
+      "target": "0x14043dde6",
+      "op": "jmp",
+      "bytes": "e9519a4300"
+    },
+    {
+      "site": "0x140004cb0",
+      "site_section": ".text",
+      "target": "0x14043e2b2",
+      "op": "jmp",
+      "bytes": "e9fd954300"
+    },
+    {
+      "site": "0x1400050d0",
+      "site_section": ".text",
+      "target": "0x14043e4cd",
+      "op": "jmp",
+      "bytes": "e9f8934300"
+    },
+    {
+      "site": "0x140007340",
+      "site_section": ".text",
+      "target": "0x140453ed5",
+      "op": "jmp",
+      "bytes": "e990cb4400"
+    },
+    {
+      "site": "0x1400073a0",
+      "site_section": ".text",
+      "target": "0x140453fb9",
+      "op": "jmp",
+      "bytes": "e914cc4400"
+    },
+    {
+      "site": "0x14000a1a0",
+      "site_section": ".text",
+      "target": "0x140452cfb",
+      "op": "jmp",
+      "bytes": "e9568b4400"
+    },
+    {
+      "site": "0x14000a3e0",
+      "site_section": ".text",
+      "target": "0x1404534f7",
+      "op": "jmp",
+      "bytes": "e912914400"
+    },
+    {
+      "site": "0x14000aa80",
+      "site_section": ".text",
+      "target": "0x1404546d2",
+      "op": "jmp",
+      "bytes": "e94d9c4400"
+    },
+    {
+      "site": "0x14000af70",
+      "site_section": ".text",
+      "target": "0x1404548a4",
+      "op": "jmp",
+      "bytes": "e92f994400"
+    },
+    {
+      "site": "0x14000b0c0",
+      "site_section": ".text",
+      "target": "0x140454ca4",
+      "op": "jmp",
+      "bytes": "e9df9b4400"
+    },
+    {
+      "site": "0x14000b9b0",
+      "site_section": ".text",
+      "target": "0x14043d40f",
+      "op": "jmp",
+      "bytes": "e95a1a4300"
+    },
+    {
+      "site": "0x14000bb80",
+      "site_section": ".text",
+      "target": "0x14043d94a",
+      "op": "jmp",
+      "bytes": "e9c51d4300"
+    },
+    {
+      "site": "0x14000bd00",
+      "site_section": ".text",
+      "target": "0x14043e93f",
+      "op": "jmp",
+      "bytes": "e93a2c4300"
+    },
+    {
+      "site": "0x14000be20",
+      "site_section": ".text",
+      "target": "0x140451dab",
+      "op": "jmp",
+      "bytes": "e9865f4400"
+    },
+    {
+      "site": "0x14000ca80",
+      "site_section": ".text",
+      "target": "0x1404730ac",
+      "op": "jmp",
+      "bytes": "e927664600"
+    },
+    {
+      "site": "0x14000d370",
+      "site_section": ".text",
+      "target": "0x14048cff4",
+      "op": "jmp",
+      "bytes": "e97ffc4700"
+    },
+    {
+      "site": "0x14000d3a0",
+      "site_section": ".text",
+      "target": "0x14048d3b9",
+      "op": "jmp",
+      "bytes": "e914004800"
+    },
+    {
+      "site": "0x14000d3f0",
+      "site_section": ".text",
+      "target": "0x14048d770",
+      "op": "jmp",
+      "bytes": "e97b034800"
+    },
+    {
+      "site": "0x14000d420",
+      "site_section": ".text",
+      "target": "0x14048d7dd",
+      "op": "jmp",
+      "bytes": "e9b8034800"
+    },
+    {
+      "site": "0x14000d680",
+      "site_section": ".text",
+      "target": "0x14048d92a",
+      "op": "jmp",
+      "bytes": "e9a5024800"
+    },
+    {
+      "site": "0x14000d7c0",
+      "site_section": ".text",
+      "target": "0x14048f278",
+      "op": "jmp",
+      "bytes": "e9b31a4800"
+    },
+    {
+      "site": "0x14000d8f0",
+      "site_section": ".text",
+      "target": "0x14048f6a1",
+      "op": "jmp",
+      "bytes": "e9ac1d4800"
+    },
+    {
+      "site": "0x14000d920",
+      "site_section": ".text",
+      "target": "0x14048fc49",
+      "op": "jmp",
+      "bytes": "e924234800"
+    },
+    {
+      "site": "0x14000e220",
+      "site_section": ".text",
+      "target": "0x140431877",
+      "op": "jmp",
+      "bytes": "e952364200"
+    },
+    {
+      "site": "0x140011390",
+      "site_section": ".text",
+      "target": "0x14048fcae",
+      "op": "jmp",
+      "bytes": "e919e94700"
+    },
+    {
+      "site": "0x140013270",
+      "site_section": ".text",
+      "target": "0x14048fffd",
+      "op": "jmp",
+      "bytes": "e988cd4700"
+    },
+    {
+      "site": "0x140013430",
+      "site_section": ".text",
+      "target": "0x14049054a",
+      "op": "jmp",
+      "bytes": "e915d14700"
+    },
+    {
+      "site": "0x1400135d0",
+      "site_section": ".text",
+      "target": "0x140490a7e",
+      "op": "jmp",
+      "bytes": "e9a9d44700"
+    },
+    {
+      "site": "0x140013740",
+      "site_section": ".text",
+      "target": "0x140491003",
+      "op": "jmp",
+      "bytes": "e9bed84700"
+    },
+    {
+      "site": "0x140013840",
+      "site_section": ".text",
+      "target": "0x140491273",
+      "op": "jmp",
+      "bytes": "e92eda4700"
+    },
+    {
+      "site": "0x1400139b0",
+      "site_section": ".text",
+      "target": "0x14049159a",
+      "op": "jmp",
+      "bytes": "e9e5db4700"
+    },
+    {
+      "site": "0x1400139f0",
+      "site_section": ".text",
+      "target": "0x140491626",
+      "op": "jmp",
+      "bytes": "e931dc4700"
+    },
+    {
+      "site": "0x140013a30",
+      "site_section": ".text",
+      "target": "0x140491692",
+      "op": "jmp",
+      "bytes": "e95ddc4700"
+    },
+    {
+      "site": "0x140013a80",
+      "site_section": ".text",
+      "target": "0x14049170f",
+      "op": "jmp",
+      "bytes": "e98adc4700"
+    },
+    {
+      "site": "0x140013aa0",
+      "site_section": ".text",
+      "target": "0x14049173f",
+      "op": "jmp",
+      "bytes": "e99adc4700"
+    },
+    {
+      "site": "0x140014910",
+      "site_section": ".text",
+      "target": "0x1404272a3",
+      "op": "jmp",
+      "bytes": "e98e294100"
+    },
+    {
+      "site": "0x140014e30",
+      "site_section": ".text",
+      "target": "0x140428621",
+      "op": "jmp",
+      "bytes": "e9ec374100"
+    },
+    {
+      "site": "0x140015190",
+      "site_section": ".text",
+      "target": "0x1404850df",
+      "op": "jmp",
+      "bytes": "e94aff4600"
+    },
+    {
+      "site": "0x140015550",
+      "site_section": ".text",
+      "target": "0x14048626e",
+      "op": "jmp",
+      "bytes": "e9190d4700"
+    },
+    {
+      "site": "0x1400155d0",
+      "site_section": ".text",
+      "target": "0x140486420",
+      "op": "jmp",
+      "bytes": "e94b0e4700"
+    },
+    {
+      "site": "0x140015bd0",
+      "site_section": ".text",
+      "target": "0x140486547",
+      "op": "jmp",
+      "bytes": "e972094700"
+    },
+    {
+      "site": "0x140015c90",
+      "site_section": ".text",
+      "target": "0x140486740",
+      "op": "jmp",
+      "bytes": "e9ab0a4700"
+    },
+    {
+      "site": "0x140015e80",
+      "site_section": ".text",
+      "target": "0x140485a31",
+      "op": "jmp",
+      "bytes": "e9acfb4600"
+    },
+    {
+      "site": "0x140016c60",
+      "site_section": ".text",
+      "target": "0x1404775cb",
+      "op": "jmp",
+      "bytes": "e966094600"
+    },
+    {
+      "site": "0x140017000",
+      "site_section": ".text",
+      "target": "0x140479138",
+      "op": "jmp",
+      "bytes": "e933214600"
+    },
+    {
+      "site": "0x1400170e0",
+      "site_section": ".text",
+      "target": "0x1404791ca",
+      "op": "jmp",
+      "bytes": "e9e5204600"
+    },
+    {
+      "site": "0x140017370",
+      "site_section": ".text",
+      "target": "0x14047977b",
+      "op": "jmp",
+      "bytes": "e906244600"
+    },
+    {
+      "site": "0x140017630",
+      "site_section": ".text",
+      "target": "0x140479b3e",
+      "op": "jmp",
+      "bytes": "e909254600"
+    },
+    {
+      "site": "0x140017740",
+      "site_section": ".text",
+      "target": "0x14047b4a5",
+      "op": "jmp",
+      "bytes": "e9603d4600"
+    },
+    {
+      "site": "0x140017820",
+      "site_section": ".text",
+      "target": "0x14047b743",
+      "op": "jmp",
+      "bytes": "e91e3f4600"
+    },
+    {
+      "site": "0x140018aa0",
+      "site_section": ".text",
+      "target": "0x140491868",
+      "op": "jmp",
+      "bytes": "e9c38d4700"
+    },
+    {
+      "site": "0x140018e00",
+      "site_section": ".text",
+      "target": "0x140491fbd",
+      "op": "jmp",
+      "bytes": "e9b8914700"
+    },
+    {
+      "site": "0x140019030",
+      "site_section": ".text",
+      "target": "0x14049b024",
+      "op": "jmp",
+      "bytes": "e9ef1f4800"
+    },
+    {
+      "site": "0x140019410",
+      "site_section": ".text",
+      "target": "0x14049eb70",
+      "op": "jmp",
+      "bytes": "e95b574800"
+    },
+    {
+      "site": "0x140019570",
+      "site_section": ".text",
+      "target": "0x140492149",
+      "op": "jmp",
+      "bytes": "e9d48b4700"
+    },
+    {
+      "site": "0x140019820",
+      "site_section": ".text",
+      "target": "0x140492877",
+      "op": "jmp",
+      "bytes": "e952904700"
+    },
+    {
+      "site": "0x1400198d0",
+      "site_section": ".text",
+      "target": "0x140499af8",
+      "op": "jmp",
+      "bytes": "e923024800"
+    },
+    {
+      "site": "0x140019940",
+      "site_section": ".text",
+      "target": "0x14049a80a",
+      "op": "jmp",
+      "bytes": "e9c50e4800"
+    },
+    {
+      "site": "0x140019a60",
+      "site_section": ".text",
+      "target": "0x14049aae2",
+      "op": "jmp",
+      "bytes": "e97d104800"
+    },
+    {
+      "site": "0x14001a090",
+      "site_section": ".text",
+      "target": "0x140494198",
+      "op": "jmp",
+      "bytes": "e903a14700"
+    },
+    {
+      "site": "0x14001a670",
+      "site_section": ".text",
+      "target": "0x140495ebf",
+      "op": "jmp",
+      "bytes": "e94ab84700"
+    },
+    {
+      "site": "0x14001a860",
+      "site_section": ".text",
+      "target": "0x140496378",
+      "op": "jmp",
+      "bytes": "e913bb4700"
+    },
+    {
+      "site": "0x14001ad70",
+      "site_section": ".text",
+      "target": "0x140496da5",
+      "op": "jmp",
+      "bytes": "e930c04700"
+    },
+    {
+      "site": "0x14001b3c0",
+      "site_section": ".text",
+      "target": "0x140497d30",
+      "op": "jmp",
+      "bytes": "e96bc94700"
+    },
+    {
+      "site": "0x14001b990",
+      "site_section": ".text",
+      "target": "0x14049a0a2",
+      "op": "jmp",
+      "bytes": "e90de74700"
+    },
+    {
+      "site": "0x14001c500",
+      "site_section": ".text",
+      "target": "0x14049be5c",
+      "op": "jmp",
+      "bytes": "e957f94700"
+    },
+    {
+      "site": "0x14001c570",
+      "site_section": ".text",
+      "target": "0x140492a25",
+      "op": "jmp",
+      "bytes": "e9b0644700"
+    },
+    {
+      "site": "0x14001cfe0",
+      "site_section": ".text",
+      "target": "0x140498737",
+      "op": "jmp",
+      "bytes": "e952b74700"
+    },
+    {
+      "site": "0x14001d720",
+      "site_section": ".text",
+      "target": "0x14049c225",
+      "op": "jmp",
+      "bytes": "e900eb4700"
+    },
+    {
+      "site": "0x14001dc70",
+      "site_section": ".text",
+      "target": "0x14049eecb",
+      "op": "jmp",
+      "bytes": "e956124800"
+    },
+    {
+      "site": "0x14001e2b0",
+      "site_section": ".text",
+      "target": "0x140495501",
+      "op": "jmp",
+      "bytes": "e94c724700"
+    },
+    {
+      "site": "0x14001e420",
+      "site_section": ".text",
+      "target": "0x14049a458",
+      "op": "jmp",
+      "bytes": "e933c04700"
+    },
+    {
+      "site": "0x14001e5b0",
+      "site_section": ".text",
+      "target": "0x14049b7b6",
+      "op": "jmp",
+      "bytes": "e901d24700"
+    },
+    {
+      "site": "0x14001e960",
+      "site_section": ".text",
+      "target": "0x14049f9f1",
+      "op": "jmp",
+      "bytes": "e98c104800"
+    },
+    {
+      "site": "0x14001e9c0",
+      "site_section": ".text",
+      "target": "0x14049fda8",
+      "op": "jmp",
+      "bytes": "e9e3134800"
+    },
+    {
+      "site": "0x14001eb10",
+      "site_section": ".text",
+      "target": "0x1404a0156",
+      "op": "jmp",
+      "bytes": "e941164800"
+    },
+    {
+      "site": "0x14001ec70",
+      "site_section": ".text",
+      "target": "0x140475b90",
+      "op": "jmp",
+      "bytes": "e91b6f4500"
+    },
+    {
+      "site": "0x14001f840",
+      "site_section": ".text",
+      "target": "0x14047cca7",
+      "op": "jmp",
+      "bytes": "e962d44500"
+    },
+    {
+      "site": "0x14001fb50",
+      "site_section": ".text",
+      "target": "0x140429d91",
+      "op": "jmp",
+      "bytes": "e93ca24000"
+    },
+    {
+      "site": "0x140021f30",
+      "site_section": ".text",
+      "target": "0x14047d843",
+      "op": "jmp",
+      "bytes": "e90eb94500"
+    },
+    {
+      "site": "0x140021fb0",
+      "site_section": ".text",
+      "target": "0x14047dbf6",
+      "op": "jmp",
+      "bytes": "e941bc4500"
+    },
+    {
+      "site": "0x1400220d0",
+      "site_section": ".text",
+      "target": "0x14047e1a2",
+      "op": "jmp",
+      "bytes": "e9cdc04500"
+    },
+    {
+      "site": "0x140022290",
+      "site_section": ".text",
+      "target": "0x140429f7d",
+      "op": "jmp",
+      "bytes": "e9e87c4000"
+    },
+    {
+      "site": "0x140023e60",
+      "site_section": ".text",
+      "target": "0x14047e53f",
+      "op": "jmp",
+      "bytes": "e9daa64500"
+    },
+    {
+      "site": "0x140023f60",
+      "site_section": ".text",
+      "target": "0x14047e7ba",
+      "op": "jmp",
+      "bytes": "e955a84500"
+    },
+    {
+      "site": "0x140024450",
+      "site_section": ".text",
+      "target": "0x14047e98b",
+      "op": "jmp",
+      "bytes": "e936a54500"
+    },
+    {
+      "site": "0x140025400",
+      "site_section": ".text",
+      "target": "0x14047eb92",
+      "op": "jmp",
+      "bytes": "e98d974500"
+    },
+    {
+      "site": "0x140025b90",
+      "site_section": ".text",
+      "target": "0x14047efd6",
+      "op": "jmp",
+      "bytes": "e941944500"
+    },
+    {
+      "site": "0x140025c40",
+      "site_section": ".text",
+      "target": "0x14047f380",
+      "op": "jmp",
+      "bytes": "e93b974500"
+    },
+    {
+      "site": "0x140025d30",
+      "site_section": ".text",
+      "target": "0x14047f445",
+      "op": "jmp",
+      "bytes": "e910974500"
+    },
+    {
+      "site": "0x140039290",
+      "site_section": ".text",
+      "target": "0x1404558ee",
+      "op": "jmp",
+      "bytes": "e959c64100"
+    },
+    {
+      "site": "0x1400443a0",
+      "site_section": ".text",
+      "target": "0x1404759d8",
+      "op": "jmp",
+      "bytes": "e933164300"
+    },
+    {
+      "site": "0x140044740",
+      "site_section": ".text",
+      "target": "0x14044bdb8",
+      "op": "jmp",
+      "bytes": "e973764000"
+    },
+    {
+      "site": "0x1400448a0",
+      "site_section": ".text",
+      "target": "0x14044c5fd",
+      "op": "jmp",
+      "bytes": "e9587d4000"
+    },
+    {
+      "site": "0x140044d10",
+      "site_section": ".text",
+      "target": "0x14044eb2b",
+      "op": "jmp",
+      "bytes": "e9169e4000"
+    },
+    {
+      "site": "0x140044ec0",
+      "site_section": ".text",
+      "target": "0x140484b4b",
+      "op": "jmp",
+      "bytes": "e986fc4300"
+    },
+    {
+      "site": "0x140045bd0",
+      "site_section": ".text",
+      "target": "0x140486cc4",
+      "op": "jmp",
+      "bytes": "e9ef104400"
+    },
+    {
+      "site": "0x140046330",
+      "site_section": ".text",
+      "target": "0x140487866",
+      "op": "jmp",
+      "bytes": "e931154400"
+    },
+    {
+      "site": "0x1400475b0",
+      "site_section": ".text",
+      "target": "0x140486906",
+      "op": "jmp",
+      "bytes": "e951f34300"
+    },
+    {
+      "site": "0x140047890",
+      "site_section": ".text",
+      "target": "0x140487478",
+      "op": "jmp",
+      "bytes": "e9e3fb4300"
+    },
+    {
+      "site": "0x140049950",
+      "site_section": ".text",
+      "target": "0x140487d9d",
+      "op": "jmp",
+      "bytes": "e948e44300"
+    },
+    {
+      "site": "0x140049eb0",
+      "site_section": ".text",
+      "target": "0x1404886fc",
+      "op": "jmp",
+      "bytes": "e947e84300"
+    },
+    {
+      "site": "0x14004ddc0",
+      "site_section": ".text",
+      "target": "0x1404889ee",
+      "op": "jmp",
+      "bytes": "e929ac4300"
+    },
+    {
+      "site": "0x14004f080",
+      "site_section": ".text",
+      "target": "0x140488ef8",
+      "op": "jmp",
+      "bytes": "e9739e4300"
+    },
+    {
+      "site": "0x14004f2d0",
+      "site_section": ".text",
+      "target": "0x1404892e7",
+      "op": "jmp",
+      "bytes": "e912a04300"
+    },
+    {
+      "site": "0x14004f430",
+      "site_section": ".text",
+      "target": "0x1404a0613",
+      "op": "jmp",
+      "bytes": "e9de114500"
+    },
+    {
+      "site": "0x14004f490",
+      "site_section": ".text",
+      "target": "0x1404a09c2",
+      "op": "jmp",
+      "bytes": "e92d154500"
+    },
+    {
+      "site": "0x140050a50",
+      "site_section": ".text",
+      "target": "0x1404a0d96",
+      "op": "jmp",
+      "bytes": "e941034500"
+    },
+    {
+      "site": "0x140050de0",
+      "site_section": ".text",
+      "target": "0x1404a1b75",
+      "op": "jmp",
+      "bytes": "e9900d4500"
+    },
+    {
+      "site": "0x140050f00",
+      "site_section": ".text",
+      "target": "0x1404a202b",
+      "op": "jmp",
+      "bytes": "e926114500"
+    },
+    {
+      "site": "0x1400515b0",
+      "site_section": ".text",
+      "target": "0x140480476",
+      "op": "jmp",
+      "bytes": "e9c1ee4200"
+    },
+    {
+      "site": "0x1400518b0",
+      "site_section": ".text",
+      "target": "0x140456687",
+      "op": "jmp",
+      "bytes": "e9d24d4000"
+    },
+    {
+      "site": "0x140051fd0",
+      "site_section": ".text",
+      "target": "0x140484ad8",
+      "op": "jmp",
+      "bytes": "e9032b4300"
+    },
+    {
+      "site": "0x140052320",
+      "site_section": ".text",
+      "target": "0x140472c95",
+      "op": "jmp",
+      "bytes": "e970094200"
+    },
+    {
+      "site": "0x140055260",
+      "site_section": ".text",
+      "target": "0x1404803b6",
+      "op": "jmp",
+      "bytes": "e951b14200"
+    },
+    {
+      "site": "0x140055c90",
+      "site_section": ".text",
+      "target": "0x14044c1b0",
+      "op": "jmp",
+      "bytes": "e91b653f00"
+    },
+    {
+      "site": "0x140055d90",
+      "site_section": ".text",
+      "target": "0x14044c465",
+      "op": "jmp",
+      "bytes": "e9d0663f00"
+    },
+    {
+      "site": "0x140055e30",
+      "site_section": ".text",
+      "target": "0x140484013",
+      "op": "jmp",
+      "bytes": "e9dee14200"
+    },
+    {
+      "site": "0x140059700",
+      "site_section": ".text",
+      "target": "0x1404a28b8",
+      "op": "jmp",
+      "bytes": "e9b3914400"
+    },
+    {
+      "site": "0x140059780",
+      "site_section": ".text",
+      "target": "0x1404a29d3",
+      "op": "jmp",
+      "bytes": "e94e924400"
+    },
+    {
+      "site": "0x140059a00",
+      "site_section": ".text",
+      "target": "0x1404a3111",
+      "op": "jmp",
+      "bytes": "e90c974400"
+    },
+    {
+      "site": "0x140059a70",
+      "site_section": ".text",
+      "target": "0x1404a3269",
+      "op": "jmp",
+      "bytes": "e9f4974400"
+    },
+    {
+      "site": "0x140059ec0",
+      "site_section": ".text",
+      "target": "0x1404a3648",
+      "op": "jmp",
+      "bytes": "e983974400"
+    },
+    {
+      "site": "0x14005a220",
+      "site_section": ".text",
+      "target": "0x1404a3cac",
+      "op": "jmp",
+      "bytes": "e9879a4400"
+    },
+    {
+      "site": "0x14005a330",
+      "site_section": ".text",
+      "target": "0x1404a3fae",
+      "op": "jmp",
+      "bytes": "e9799c4400"
+    },
+    {
+      "site": "0x14005a7e0",
+      "site_section": ".text",
+      "target": "0x1404a41cf",
+      "op": "jmp",
+      "bytes": "e9ea994400"
+    },
+    {
+      "site": "0x14005b360",
+      "site_section": ".text",
+      "target": "0x1404a4488",
+      "op": "jmp",
+      "bytes": "e923914400"
+    },
+    {
+      "site": "0x14005b440",
+      "site_section": ".text",
+      "target": "0x1404a4719",
+      "op": "jmp",
+      "bytes": "e9d4924400"
+    },
+    {
+      "site": "0x14005bb80",
+      "site_section": ".text",
+      "target": "0x1404a4c2d",
+      "op": "jmp",
+      "bytes": "e9a8904400"
+    },
+    {
+      "site": "0x14005c230",
+      "site_section": ".text",
+      "target": "0x1404a50c1",
+      "op": "jmp",
+      "bytes": "e98c8e4400"
+    },
+    {
+      "site": "0x14005c380",
+      "site_section": ".text",
+      "target": "0x1404a52b0",
+      "op": "jmp",
+      "bytes": "e92b8f4400"
+    },
+    {
+      "site": "0x14005c4b0",
+      "site_section": ".text",
+      "target": "0x1404a5629",
+      "op": "jmp",
+      "bytes": "e974914400"
+    },
+    {
+      "site": "0x14005cad0",
+      "site_section": ".text",
+      "target": "0x1404a5a47",
+      "op": "jmp",
+      "bytes": "e9728f4400"
+    },
+    {
+      "site": "0x14005cc30",
+      "site_section": ".text",
+      "target": "0x1404a5dde",
+      "op": "jmp",
+      "bytes": "e9a9914400"
+    },
+    {
+      "site": "0x14005cde0",
+      "site_section": ".text",
+      "target": "0x1404a5f22",
+      "op": "jmp",
+      "bytes": "e93d914400"
+    },
+    {
+      "site": "0x14005d040",
+      "site_section": ".text",
+      "target": "0x1404a6667",
+      "op": "jmp",
+      "bytes": "e922964400"
+    },
+    {
+      "site": "0x14005d160",
+      "site_section": ".text",
+      "target": "0x1404841fb",
+      "op": "jmp",
+      "bytes": "e996704200"
+    },
+    {
+      "site": "0x14005d2a0",
+      "site_section": ".text",
+      "target": "0x140484580",
+      "op": "jmp",
+      "bytes": "e9db724200"
+    },
+    {
+      "site": "0x140061090",
+      "site_section": ".text",
+      "target": "0x140489611",
+      "op": "jmp",
+      "bytes": "e97c854200"
+    },
+    {
+      "site": "0x140061450",
+      "site_section": ".text",
+      "target": "0x140489bba",
+      "op": "jmp",
+      "bytes": "e965874200"
+    },
+    {
+      "site": "0x140061540",
+      "site_section": ".text",
+      "target": "0x140489e09",
+      "op": "jmp",
+      "bytes": "e9c4884200"
+    },
+    {
+      "site": "0x1400615a0",
+      "site_section": ".text",
+      "target": "0x140489ed5",
+      "op": "jmp",
+      "bytes": "e930894200"
+    },
+    {
+      "site": "0x1400616d0",
+      "site_section": ".text",
+      "target": "0x14048a486",
+      "op": "jmp",
+      "bytes": "e9b18d4200"
+    },
+    {
+      "site": "0x140061d10",
+      "site_section": ".text",
+      "target": "0x14048a97b",
+      "op": "jmp",
+      "bytes": "e9668c4200"
+    },
+    {
+      "site": "0x140061f50",
+      "site_section": ".text",
+      "target": "0x14048af5a",
+      "op": "jmp",
+      "bytes": "e905904200"
+    },
+    {
+      "site": "0x1400620c0",
+      "site_section": ".text",
+      "target": "0x14048b2e8",
+      "op": "jmp",
+      "bytes": "e923924200"
+    },
+    {
+      "site": "0x1400626e0",
+      "site_section": ".text",
+      "target": "0x14048b69c",
+      "op": "jmp",
+      "bytes": "e9b78f4200"
+    },
+    {
+      "site": "0x140062710",
+      "site_section": ".text",
+      "target": "0x14048b84d",
+      "op": "jmp",
+      "bytes": "e938914200"
+    },
+    {
+      "site": "0x140062c40",
+      "site_section": ".text",
+      "target": "0x140480506",
+      "op": "jmp",
+      "bytes": "e9c1d84100"
+    },
+    {
+      "site": "0x140062fe0",
+      "site_section": ".text",
+      "target": "0x14048089c",
+      "op": "jmp",
+      "bytes": "e9b7d84100"
+    },
+    {
+      "site": "0x1400630e0",
+      "site_section": ".text",
+      "target": "0x14048097b",
+      "op": "jmp",
+      "bytes": "e996d84100"
+    },
+    {
+      "site": "0x140065db8",
+      "site_section": ".text",
+      "target": "0x14044aa17",
+      "op": "jmp",
+      "bytes": "e95a4c3e00"
+    },
+    {
+      "site": "0x140065ec4",
+      "site_section": ".text",
+      "target": "0x1404cb385",
+      "op": "jmp",
+      "bytes": "e9bc544600"
+    },
+    {
+      "site": "0x1400665fc",
+      "site_section": ".text",
+      "target": "0x14046d46c",
+      "op": "jmp",
+      "bytes": "e96b6e4000"
+    },
+    {
+      "site": "0x14006bad0",
+      "site_section": ".text",
+      "target": "0x14067bb4a",
+      "op": "call",
+      "bytes": "e875006100"
+    },
+    {
+      "site": "0x14006bb8b",
+      "site_section": ".text",
+      "target": "0x1404bbc09",
+      "op": "call",
+      "bytes": "e879004500"
+    },
+    {
+      "site": "0x14006c3ec",
+      "site_section": ".text",
+      "target": "0x140457218",
+      "op": "jmp",
+      "bytes": "e927ae3e00"
+    },
+    {
+      "site": "0x14006d5ec",
+      "site_section": ".text",
+      "target": "0x14045b4d3",
+      "op": "jmp",
+      "bytes": "e9e2de3e00"
+    },
+    {
+      "site": "0x14006de5c",
+      "site_section": ".text",
+      "target": "0x140468365",
+      "op": "jmp",
+      "bytes": "e904a53f00"
+    },
+    {
+      "site": "0x14006def4",
+      "site_section": ".text",
+      "target": "0x14042dda4",
+      "op": "jmp",
+      "bytes": "e9abfe3b00"
+    },
+    {
+      "site": "0x14006df08",
+      "site_section": ".text",
+      "target": "0x14042ddd2",
+      "op": "jmp",
+      "bytes": "e9c5fe3b00"
+    },
+    {
+      "site": "0x14006e104",
+      "site_section": ".text",
+      "target": "0x1404c152a",
+      "op": "jmp",
+      "bytes": "e921344500"
+    },
+    {
+      "site": "0x14006e184",
+      "site_section": ".text",
+      "target": "0x1404c1754",
+      "op": "jmp",
+      "bytes": "e9cb354500"
+    },
+    {
+      "site": "0x14006e208",
+      "site_section": ".text",
+      "target": "0x1404c1925",
+      "op": "jmp",
+      "bytes": "e918374500"
+    },
+    {
+      "site": "0x14006e28c",
+      "site_section": ".text",
+      "target": "0x1404c1af7",
+      "op": "jmp",
+      "bytes": "e966384500"
+    },
+    {
+      "site": "0x14006e348",
+      "site_section": ".text",
+      "target": "0x1404c1c9f",
+      "op": "jmp",
+      "bytes": "e952394500"
+    },
+    {
+      "site": "0x14006e3b8",
+      "site_section": ".text",
+      "target": "0x1404c1df7",
+      "op": "jmp",
+      "bytes": "e93a3a4500"
+    },
+    {
+      "site": "0x14006e4c4",
+      "site_section": ".text",
+      "target": "0x1404c2030",
+      "op": "jmp",
+      "bytes": "e9673b4500"
+    },
+    {
+      "site": "0x14006e4e8",
+      "site_section": ".text",
+      "target": "0x1404c2091",
+      "op": "jmp",
+      "bytes": "e9a43b4500"
+    },
+    {
+      "site": "0x14006e514",
+      "site_section": ".text",
+      "target": "0x1404c2109",
+      "op": "jmp",
+      "bytes": "e9f03b4500"
+    },
+    {
+      "site": "0x14006ec78",
+      "site_section": ".text",
+      "target": "0x1404c730c",
+      "op": "jmp",
+      "bytes": "e98f864500"
+    },
+    {
+      "site": "0x14006ed00",
+      "site_section": ".text",
+      "target": "0x1404c7a73",
+      "op": "jmp",
+      "bytes": "e96e8d4500"
+    },
+    {
+      "site": "0x14006f7d0",
+      "site_section": ".text",
+      "target": "0x1404c49d6",
+      "op": "jmp",
+      "bytes": "e901524500"
+    },
+    {
+      "site": "0x14006f810",
+      "site_section": ".text",
+      "target": "0x140466df1",
+      "op": "jmp",
+      "bytes": "e9dc753f00"
+    },
+    {
+      "site": "0x14006f888",
+      "site_section": ".text",
+      "target": "0x14045088d",
+      "op": "jmp",
+      "bytes": "e900103e00"
+    },
+    {
+      "site": "0x14006f8d4",
+      "site_section": ".text",
+      "target": "0x140450e1c",
+      "op": "jmp",
+      "bytes": "e943153e00"
+    },
+    {
+      "site": "0x14006fb30",
+      "site_section": ".text",
+      "target": "0x14043e70c",
+      "op": "jmp",
+      "bytes": "e9d7eb3c00"
+    },
+    {
+      "site": "0x14006fbe0",
+      "site_section": ".text",
+      "target": "0x1404c23d5",
+      "op": "jmp",
+      "bytes": "e9f0274500"
+    },
+    {
+      "site": "0x14006fc80",
+      "site_section": ".text",
+      "target": "0x1404c25e9",
+      "op": "jmp",
+      "bytes": "e964294500"
+    },
+    {
+      "site": "0x14006fcac",
+      "site_section": ".text",
+      "target": "0x1404c2693",
+      "op": "jmp",
+      "bytes": "e9e2294500"
+    },
+    {
+      "site": "0x14006fe40",
+      "site_section": ".text",
+      "target": "0x1404c288a",
+      "op": "jmp",
+      "bytes": "e9452a4500"
+    },
+    {
+      "site": "0x1400700a4",
+      "site_section": ".text",
+      "target": "0x1404c2c97",
+      "op": "jmp",
+      "bytes": "e9ee2b4500"
+    },
+    {
+      "site": "0x1400703bc",
+      "site_section": ".text",
+      "target": "0x140469120",
+      "op": "jmp",
+      "bytes": "e95f8d3f00"
+    },
+    {
+      "site": "0x140070448",
+      "site_section": ".text",
+      "target": "0x140469348",
+      "op": "jmp",
+      "bytes": "e9fb8e3f00"
+    },
+    {
+      "site": "0x14007062c",
+      "site_section": ".text",
+      "target": "0x1404c8a5a",
+      "op": "jmp",
+      "bytes": "e929844500"
+    },
+    {
+      "site": "0x1400706a0",
+      "site_section": ".text",
+      "target": "0x1404c8c01",
+      "op": "jmp",
+      "bytes": "e95c854500"
+    },
+    {
+      "site": "0x1400708ac",
+      "site_section": ".text",
+      "target": "0x1404c903f",
+      "op": "jmp",
+      "bytes": "e98e874500"
+    },
+    {
+      "site": "0x1400708ec",
+      "site_section": ".text",
+      "target": "0x1404c95e5",
+      "op": "jmp",
+      "bytes": "e9f48c4500"
+    },
+    {
+      "site": "0x14007093c",
+      "site_section": ".text",
+      "target": "0x1404c9c3b",
+      "op": "jmp",
+      "bytes": "e9fa924500"
+    },
+    {
+      "site": "0x140070a00",
+      "site_section": ".text",
+      "target": "0x1404ca3eb",
+      "op": "jmp",
+      "bytes": "e9e6994500"
+    },
+    {
+      "site": "0x140070a3c",
+      "site_section": ".text",
+      "target": "0x1404cad71",
+      "op": "jmp",
+      "bytes": "e930a34500"
+    },
+    {
+      "site": "0x140070a74",
+      "site_section": ".text",
+      "target": "0x14043fb38",
+      "op": "jmp",
+      "bytes": "e9bff03c00"
+    },
+    {
+      "site": "0x140070bb0",
+      "site_section": ".text",
+      "target": "0x140468a5a",
+      "op": "jmp",
+      "bytes": "e9a57e3f00"
+    },
+    {
+      "site": "0x140070bbc",
+      "site_section": ".text",
+      "target": "0x140468f1c",
+      "op": "jmp",
+      "bytes": "e95b833f00"
+    },
+    {
+      "site": "0x140070c60",
+      "site_section": ".text",
+      "target": "0x14043240f",
+      "op": "jmp",
+      "bytes": "e9aa173c00"
+    },
+    {
+      "site": "0x140070ec8",
+      "site_section": ".text",
+      "target": "0x140433392",
+      "op": "jmp",
+      "bytes": "e9c5243c00"
+    },
+    {
+      "site": "0x1400713ac",
+      "site_section": ".text",
+      "target": "0x140437e7a",
+      "op": "jmp",
+      "bytes": "e9c96a3c00"
+    },
+    {
+      "site": "0x140071728",
+      "site_section": ".text",
+      "target": "0x140438dea",
+      "op": "jmp",
+      "bytes": "e9bd763c00"
+    },
+    {
+      "site": "0x140071850",
+      "site_section": ".text",
+      "target": "0x14043978e",
+      "op": "jmp",
+      "bytes": "e9397f3c00"
+    },
+    {
+      "site": "0x1400719dc",
+      "site_section": ".text",
+      "target": "0x14043acdf",
+      "op": "jmp",
+      "bytes": "e9fe923c00"
+    },
+    {
+      "site": "0x140071ef8",
+      "site_section": ".text",
+      "target": "0x14043fca2",
+      "op": "jmp",
+      "bytes": "e9a5dd3c00"
+    },
+    {
+      "site": "0x140071ffc",
+      "site_section": ".text",
+      "target": "0x1404421bb",
+      "op": "jmp",
+      "bytes": "e9ba013d00"
+    },
+    {
+      "site": "0x140072350",
+      "site_section": ".text",
+      "target": "0x140445ab0",
+      "op": "jmp",
+      "bytes": "e95b373d00"
+    },
+    {
+      "site": "0x140072574",
+      "site_section": ".text",
+      "target": "0x140449397",
+      "op": "jmp",
+      "bytes": "e91e6e3d00"
+    },
+    {
+      "site": "0x1400725c0",
+      "site_section": ".text",
+      "target": "0x140449cd9",
+      "op": "jmp",
+      "bytes": "e914773d00"
+    },
+    {
+      "site": "0x140073448",
+      "site_section": ".text",
+      "target": "0x1404c49f8",
+      "op": "jmp",
+      "bytes": "e9ab154500"
+    },
+    {
+      "site": "0x1400734f8",
+      "site_section": ".text",
+      "target": "0x1404c4cb4",
+      "op": "jmp",
+      "bytes": "e9b7174500"
+    },
+    {
+      "site": "0x140074a94",
+      "site_section": ".text",
+      "target": "0x1404cb8f7",
+      "op": "jmp",
+      "bytes": "e95e6e4500"
+    },
+    {
+      "site": "0x140074df0",
+      "site_section": ".text",
+      "target": "0x1404cbb92",
+      "op": "jmp",
+      "bytes": "e99d6d4500"
+    },
+    {
+      "site": "0x140074e28",
+      "site_section": ".text",
+      "target": "0x1404cbc8c",
+      "op": "jmp",
+      "bytes": "e95f6e4500"
+    },
+    {
+      "site": "0x140074f90",
+      "site_section": ".text",
+      "target": "0x1404cbf0f",
+      "op": "jmp",
+      "bytes": "e97a6f4500"
+    },
+    {
+      "site": "0x1400752b4",
+      "site_section": ".text",
+      "target": "0x1404c5052",
+      "op": "jmp",
+      "bytes": "e999fd4400"
+    },
+    {
+      "site": "0x1400753c0",
+      "site_section": ".text",
+      "target": "0x1404c5344",
+      "op": "jmp",
+      "bytes": "e97fff4400"
+    },
+    {
+      "site": "0x140075d6c",
+      "site_section": ".text",
+      "target": "0x1404c6ce1",
+      "op": "jmp",
+      "bytes": "e9700f4500"
+    },
+    {
+      "site": "0x140075e48",
+      "site_section": ".text",
+      "target": "0x1404c6e46",
+      "op": "jmp",
+      "bytes": "e9f90f4500"
+    },
+    {
+      "site": "0x140075e94",
+      "site_section": ".text",
+      "target": "0x1404c6f7e",
+      "op": "jmp",
+      "bytes": "e9e5104500"
+    },
+    {
+      "site": "0x140075ee0",
+      "site_section": ".text",
+      "target": "0x1404c7096",
+      "op": "jmp",
+      "bytes": "e9b1114500"
+    },
+    {
+      "site": "0x140075f34",
+      "site_section": ".text",
+      "target": "0x1404c71f2",
+      "op": "jmp",
+      "bytes": "e9b9124500"
+    },
+    {
+      "site": "0x1400764b4",
+      "site_section": ".text",
+      "target": "0x1404c5709",
+      "op": "jmp",
+      "bytes": "e950f24400"
+    },
+    {
+      "site": "0x1400766e8",
+      "site_section": ".text",
+      "target": "0x1404c5f6e",
+      "op": "jmp",
+      "bytes": "e981f84400"
+    },
+    {
+      "site": "0x140076760",
+      "site_section": ".text",
+      "target": "0x1404c613d",
+      "op": "jmp",
+      "bytes": "e9d8f94400"
+    },
+    {
+      "site": "0x140077194",
+      "site_section": ".text",
+      "target": "0x140471f0c",
+      "op": "jmp",
+      "bytes": "e973ad3f00"
+    },
+    {
+      "site": "0x14007773c",
+      "site_section": ".text",
+      "target": "0x140468a7c",
+      "op": "jmp",
+      "bytes": "e93b133f00"
+    },
+    {
+      "site": "0x140077ecc",
+      "site_section": ".text",
+      "target": "0x1404c7e2f",
+      "op": "jmp",
+      "bytes": "e95eff4400"
+    },
+    {
+      "site": "0x140078138",
+      "site_section": ".text",
+      "target": "0x1404c8148",
+      "op": "jmp",
+      "bytes": "e90b004500"
+    },
+    {
+      "site": "0x1400781cc",
+      "site_section": ".text",
+      "target": "0x1404c85a0",
+      "op": "jmp",
+      "bytes": "e9cf034500"
+    },
+    {
+      "site": "0x14007832c",
+      "site_section": ".text",
+      "target": "0x1404c7f85",
+      "op": "jmp",
+      "bytes": "e954fc4400"
+    },
+    {
+      "site": "0x14007d784",
+      "site_section": ".text",
+      "target": "0x1404cb194",
+      "op": "jmp",
+      "bytes": "e90bda4400"
+    },
+    {
+      "site": "0x14007dbfc",
+      "site_section": ".text",
+      "target": "0x1404cb25d",
+      "op": "jmp",
+      "bytes": "e95cd64400"
+    },
+    {
+      "site": "0x14007f09c",
+      "site_section": ".text",
+      "target": "0x1404c66d4",
+      "op": "jmp",
+      "bytes": "e933764400"
+    },
+    {
+      "site": "0x14007f1b8",
+      "site_section": ".text",
+      "target": "0x1404c675f",
+      "op": "jmp",
+      "bytes": "e9a2754400"
+    },
+    {
+      "site": "0x14007f8fc",
+      "site_section": ".text",
+      "target": "0x1404c842d",
+      "op": "jmp",
+      "bytes": "e92c8b4400"
+    },
+    {
+      "site": "0x140083b00",
+      "site_section": ".text",
+      "target": "0x14044b9c3",
+      "op": "jmp",
+      "bytes": "e9be7e3c00"
+    },
+    {
+      "site": "0x1400894f0",
+      "site_section": ".text",
+      "target": "0x140474164",
+      "op": "jmp",
+      "bytes": "e96fac3e00"
+    },
+    {
+      "site": "0x140089520",
+      "site_section": ".text",
+      "target": "0x1404741c8",
+      "op": "jmp",
+      "bytes": "e9a3ac3e00"
+    },
+    {
+      "site": "0x140089a1c",
+      "site_section": ".text",
+      "target": "0x140474284",
+      "op": "jmp",
+      "bytes": "e963a83e00"
+    },
+    {
+      "site": "0x140089a70",
+      "site_section": ".text",
+      "target": "0x140474375",
+      "op": "jmp",
+      "bytes": "e900a93e00"
+    },
+    {
+      "site": "0x140089b04",
+      "site_section": ".text",
+      "target": "0x14043f9dc",
+      "op": "jmp",
+      "bytes": "e9d35e3b00"
+    },
+    {
+      "site": "0x140089e00",
+      "site_section": ".text",
+      "target": "0x1404744fb",
+      "op": "jmp",
+      "bytes": "e9f6a63e00"
+    },
+    {
+      "site": "0x14008a1a0",
+      "site_section": ".text",
+      "target": "0x140474cb8",
+      "op": "jmp",
+      "bytes": "e913ab3e00"
+    },
+    {
+      "site": "0x14008a628",
+      "site_section": ".text",
+      "target": "0x14046ed84",
+      "op": "jmp",
+      "bytes": "e957473e00"
+    },
+    {
+      "site": "0x14008a8b4",
+      "site_section": ".text",
+      "target": "0x14047572a",
+      "op": "jmp",
+      "bytes": "e971ae3e00"
+    },
+    {
+      "site": "0x14008a95c",
+      "site_section": ".text",
+      "target": "0x1404758ef",
+      "op": "jmp",
+      "bytes": "e98eaf3e00"
+    },
+    {
+      "site": "0x14008c400",
+      "site_section": ".text",
+      "target": "0x140475eab",
+      "op": "jmp",
+      "bytes": "e9a69a3e00"
+    },
+    {
+      "site": "0x1400956f0",
+      "site_section": ".text",
+      "target": "0x1404737d8",
+      "op": "jmp",
+      "bytes": "e9e3e03d00"
+    },
+    {
+      "site": "0x140095850",
+      "site_section": ".text",
+      "target": "0x140473ca0",
+      "op": "jmp",
+      "bytes": "e94be43d00"
+    },
+    {
+      "site": "0x1400a2328",
+      "site_section": ".text",
+      "target": "0x14046f658",
+      "op": "jmp",
+      "bytes": "e92bd33c00"
+    },
+    {
+      "site": "0x1400a2378",
+      "site_section": ".text",
+      "target": "0x14046f89b",
+      "op": "jmp",
+      "bytes": "e91ed53c00"
+    },
+    {
+      "site": "0x1400a3d10",
+      "site_section": ".text",
+      "target": "0x14046f762",
+      "op": "jmp",
+      "bytes": "e94dba3c00"
+    },
+    {
+      "site": "0x1400a3d60",
+      "site_section": ".text",
+      "target": "0x14046fa3e",
+      "op": "jmp",
+      "bytes": "e9d9bc3c00"
+    },
+    {
+      "site": "0x1400a7934",
+      "site_section": ".text",
+      "target": "0x14046dc04",
+      "op": "jmp",
+      "bytes": "e9cb623c00"
+    },
+    {
+      "site": "0x1400aa0fc",
+      "site_section": ".text",
+      "target": "0x1404a6fec",
+      "op": "jmp",
+      "bytes": "e9ebce3f00"
+    },
+    {
+      "site": "0x1400aafa1",
+      "site_section": ".text",
+      "target": "0x1405ab065",
+      "op": "jmp",
+      "bytes": "e9bf005000"
+    },
+    {
+      "site": "0x1400ac638",
+      "site_section": ".text",
+      "target": "0x1404b7309",
+      "op": "jmp",
+      "bytes": "e9ccac4000"
+    },
+    {
+      "site": "0x1400aed5c",
+      "site_section": ".text",
+      "target": "0x1404b2a76",
+      "op": "jmp",
+      "bytes": "e9153d4000"
+    },
+    {
+      "site": "0x1400aee58",
+      "site_section": ".text",
+      "target": "0x1404b49d0",
+      "op": "jmp",
+      "bytes": "e9735b4000"
+    },
+    {
+      "site": "0x1400afaed",
+      "site_section": ".text",
+      "target": "0x1404bfb39",
+      "op": "call",
+      "bytes": "e847004100"
+    },
+    {
+      "site": "0x1400b003a",
+      "site_section": ".text",
+      "target": "0x1405e006d",
+      "op": "call",
+      "bytes": "e82e005300"
+    },
+    {
+      "site": "0x1400b0418",
+      "site_section": ".text",
+      "target": "0x14048288f",
+      "op": "jmp",
+      "bytes": "e972243d00"
+    },
+    {
+      "site": "0x1400b0564",
+      "site_section": ".text",
+      "target": "0x140482ce4",
+      "op": "jmp",
+      "bytes": "e97b273d00"
+    },
+    {
+      "site": "0x1400b70f4",
+      "site_section": ".text",
+      "target": "0x1404820e5",
+      "op": "jmp",
+      "bytes": "e9ecaf3c00"
+    },
+    {
+      "site": "0x1400b7358",
+      "site_section": ".text",
+      "target": "0x14042e7dd",
+      "op": "jmp",
+      "bytes": "e980743700"
+    },
+    {
+      "site": "0x1400b75c0",
+      "site_section": ".text",
+      "target": "0x14042fb5c",
+      "op": "jmp",
+      "bytes": "e997853700"
+    },
+    {
+      "site": "0x1400b79a4",
+      "site_section": ".text",
+      "target": "0x140483118",
+      "op": "jmp",
+      "bytes": "e96fb73c00"
+    },
+    {
+      "site": "0x1400b7bbc",
+      "site_section": ".text",
+      "target": "0x140483a37",
+      "op": "jmp",
+      "bytes": "e976be3c00"
+    },
+    {
+      "site": "0x1400bb300",
+      "site_section": ".text",
+      "target": "0x14042de3e",
+      "op": "jmp",
+      "bytes": "e9392b3700"
+    },
+    {
+      "site": "0x1400bb714",
+      "site_section": ".text",
+      "target": "0x140430ce5",
+      "op": "jmp",
+      "bytes": "e9cc553700"
+    },
+    {
+      "site": "0x1400c11f3",
+      "site_section": ".text",
+      "target": "0x140599b3c",
+      "op": "jmp",
+      "bytes": "e944894d00"
+    },
+    {
+      "site": "0x1400c5fac",
+      "site_section": ".text",
+      "target": "0x1404b8a3a",
+      "op": "jmp",
+      "bytes": "e9892a3f00"
+    },
+    {
+      "site": "0x1400c6604",
+      "site_section": ".text",
+      "target": "0x1404b8288",
+      "op": "jmp",
+      "bytes": "e97f1c3f00"
+    },
+    {
+      "site": "0x1400c66ac",
+      "site_section": ".text",
+      "target": "0x1404b95d2",
+      "op": "jmp",
+      "bytes": "e9212f3f00"
+    },
+    {
+      "site": "0x1400c6710",
+      "site_section": ".text",
+      "target": "0x1404b996e",
+      "op": "jmp",
+      "bytes": "e959323f00"
+    },
+    {
+      "site": "0x1400c6734",
+      "site_section": ".text",
+      "target": "0x1404ba111",
+      "op": "jmp",
+      "bytes": "e9d8393f00"
+    },
+    {
+      "site": "0x1400c679c",
+      "site_section": ".text",
+      "target": "0x1404ba6bd",
+      "op": "jmp",
+      "bytes": "e91c3f3f00"
+    },
+    {
+      "site": "0x1400c681c",
+      "site_section": ".text",
+      "target": "0x1404ba880",
+      "op": "jmp",
+      "bytes": "e95f403f00"
+    },
+    {
+      "site": "0x1400c6840",
+      "site_section": ".text",
+      "target": "0x1404bb024",
+      "op": "jmp",
+      "bytes": "e9df473f00"
+    },
+    {
+      "site": "0x1400c7b7c",
+      "site_section": ".text",
+      "target": "0x140410c69",
+      "op": "call",
+      "bytes": "e8e8903400"
+    },
+    {
+      "site": "0x1400c8240",
+      "site_section": ".text",
+      "target": "0x1404bb3d2",
+      "op": "jmp",
+      "bytes": "e98d313f00"
+    },
+    {
+      "site": "0x1400c8470",
+      "site_section": ".text",
+      "target": "0x140455cef",
+      "op": "jmp",
+      "bytes": "e97ad83800"
+    },
+    {
+      "site": "0x1400c8648",
+      "site_section": ".text",
+      "target": "0x140469556",
+      "op": "jmp",
+      "bytes": "e9090f3a00"
+    },
+    {
+      "site": "0x1400c8cb8",
+      "site_section": ".text",
+      "target": "0x14046fbdc",
+      "op": "jmp",
+      "bytes": "e91f6f3a00"
+    },
+    {
+      "site": "0x1400c924c",
+      "site_section": ".text",
+      "target": "0x1404bc74f",
+      "op": "jmp",
+      "bytes": "e9fe343f00"
+    },
+    {
+      "site": "0x1400c9990",
+      "site_section": ".text",
+      "target": "0x14045505f",
+      "op": "jmp",
+      "bytes": "e9cab63800"
+    },
+    {
+      "site": "0x1403b516f",
+      "site_section": "PAGE",
+      "target": "0x14040dd5c",
+      "op": "call",
+      "bytes": "e8e88b0500"
+    },
+    {
+      "site": "0x1403b517c",
+      "site_section": "PAGE",
+      "target": "0x14040e069",
+      "op": "call",
+      "bytes": "e8e88e0500"
+    },
+    {
+      "site": "0x1403b5189",
+      "site_section": "PAGE",
+      "target": "0x140420b76",
+      "op": "call",
+      "bytes": "e8e8b90600"
+    },
+    {
+      "site": "0x1403b5e87",
+      "site_section": "PAGE",
+      "target": "0x1403c3274",
+      "op": "call",
+      "bytes": "e8e8d30000"
+    }
+  ],
+  "distinct_targets": [
+    "0x1403c3274",
+    "0x14040dd5c",
+    "0x14040e069",
+    "0x140410c69",
+    "0x140420b76",
+    "0x1404272a3",
+    "0x140428621",
+    "0x140429d91",
+    "0x140429f7d",
+    "0x14042dda4",
+    "0x14042ddd2",
+    "0x14042de3e",
+    "0x14042e7dd",
+    "0x14042fb5c",
+    "0x140430ce5",
+    "0x140431877",
+    "0x14043240f",
+    "0x140433392",
+    "0x140437e7a",
+    "0x140438dea",
+    "0x14043978e",
+    "0x14043acdf",
+    "0x14043d40f",
+    "0x14043d94a",
+    "0x14043dde6",
+    "0x14043e2b2",
+    "0x14043e4cd",
+    "0x14043e70c",
+    "0x14043e93f",
+    "0x14043ec4e",
+    "0x14043f9dc",
+    "0x14043fb38",
+    "0x14043fca2",
+    "0x1404421bb",
+    "0x140445ab0",
+    "0x140449397",
+    "0x140449cd9",
+    "0x14044aa17",
+    "0x14044b9c3",
+    "0x14044bd41",
+    "0x14044bdb8",
+    "0x14044c1b0",
+    "0x14044c465",
+    "0x14044c5fd",
+    "0x14044eb2b",
+    "0x14045088d",
+    "0x140450e1c",
+    "0x140451dab",
+    "0x140452cfb",
+    "0x1404534f7",
+    "0x140453ed5",
+    "0x140453fb9",
+    "0x1404546d2",
+    "0x1404548a4",
+    "0x140454ca4",
+    "0x14045505f",
+    "0x1404558ee",
+    "0x140455cef",
+    "0x140456687",
+    "0x140457218",
+    "0x14045b4d3",
+    "0x140466df1",
+    "0x140468365",
+    "0x140468a5a",
+    "0x140468a7c",
+    "0x140468f1c",
+    "0x140469120",
+    "0x140469348",
+    "0x140469556",
+    "0x14046d46c",
+    "0x14046dc04",
+    "0x14046ed84",
+    "0x14046f658",
+    "0x14046f762",
+    "0x14046f89b",
+    "0x14046fa3e",
+    "0x14046fbdc",
+    "0x140471f0c",
+    "0x140472c95",
+    "0x1404730ac",
+    "0x1404737d8",
+    "0x140473ca0",
+    "0x140474164",
+    "0x1404741c8",
+    "0x140474284",
+    "0x140474375",
+    "0x1404744fb",
+    "0x140474cb8",
+    "0x14047572a",
+    "0x1404758ef",
+    "0x1404759d8",
+    "0x140475b90",
+    "0x140475eab",
+    "0x1404775cb",
+    "0x140479138",
+    "0x1404791ca",
+    "0x14047977b",
+    "0x140479b3e",
+    "0x14047b4a5",
+    "0x14047b743",
+    "0x14047cca7",
+    "0x14047d41a",
+    "0x14047d843",
+    "0x14047dbf6",
+    "0x14047e1a2",
+    "0x14047e53f",
+    "0x14047e7ba",
+    "0x14047e98b",
+    "0x14047eb92",
+    "0x14047efd6",
+    "0x14047f380",
+    "0x14047f445",
+    "0x1404803b6",
+    "0x140480476",
+    "0x140480506",
+    "0x14048089c",
+    "0x14048097b",
+    "0x1404820e5",
+    "0x14048288f",
+    "0x140482ce4",
+    "0x140483118",
+    "0x140483a37",
+    "0x140484013",
+    "0x1404841fb",
+    "0x140484580",
+    "0x140484ad8",
+    "0x140484b4b",
+    "0x1404850df",
+    "0x140485a31",
+    "0x14048626e",
+    "0x140486420",
+    "0x140486547",
+    "0x140486740",
+    "0x140486906",
+    "0x140486cc4",
+    "0x140487478",
+    "0x140487866",
+    "0x140487d9d",
+    "0x1404886fc",
+    "0x1404889ee",
+    "0x140488ef8",
+    "0x1404892e7",
+    "0x140489611",
+    "0x140489bba",
+    "0x140489e09",
+    "0x140489ed5",
+    "0x14048a486",
+    "0x14048a97b",
+    "0x14048af5a",
+    "0x14048b2e8",
+    "0x14048b69c",
+    "0x14048b84d",
+    "0x14048bddc",
+    "0x14048be55",
+    "0x14048bf22",
+    "0x14048bf6d",
+    "0x14048c206",
+    "0x14048c7b7",
+    "0x14048cf02",
+    "0x14048cfbb",
+    "0x14048cff4",
+    "0x14048d3b9",
+    "0x14048d770",
+    "0x14048d7dd",
+    "0x14048d92a",
+    "0x14048f278",
+    "0x14048f6a1",
+    "0x14048fc49",
+    "0x14048fcae",
+    "0x14048fffd",
+    "0x14049054a",
+    "0x140490a7e",
+    "0x140491003",
+    "0x140491273",
+    "0x14049159a",
+    "0x140491626",
+    "0x140491692",
+    "0x14049170f",
+    "0x14049173f",
+    "0x140491868",
+    "0x140491fbd",
+    "0x140492149",
+    "0x140492877",
+    "0x140492a25",
+    "0x140494198",
+    "0x140495501",
+    "0x140495ebf",
+    "0x140496378",
+    "0x140496da5",
+    "0x140497d30",
+    "0x140498737",
+    "0x140499af8",
+    "0x14049a0a2",
+    "0x14049a458",
+    "0x14049a80a",
+    "0x14049aae2",
+    "0x14049b024",
+    "0x14049b7b6",
+    "0x14049be5c",
+    "0x14049c225",
+    "0x14049eb70",
+    "0x14049eecb",
+    "0x14049f9f1",
+    "0x14049fda8",
+    "0x1404a0156",
+    "0x1404a0613",
+    "0x1404a09c2",
+    "0x1404a0d96",
+    "0x1404a1b75",
+    "0x1404a202b",
+    "0x1404a28b8",
+    "0x1404a29d3",
+    "0x1404a3111",
+    "0x1404a3269",
+    "0x1404a3648",
+    "0x1404a3cac",
+    "0x1404a3fae",
+    "0x1404a41cf",
+    "0x1404a4488",
+    "0x1404a4719",
+    "0x1404a4c2d",
+    "0x1404a50c1",
+    "0x1404a52b0",
+    "0x1404a5629",
+    "0x1404a5a47",
+    "0x1404a5dde",
+    "0x1404a5f22",
+    "0x1404a6667",
+    "0x1404a6fec",
+    "0x1404b2a76",
+    "0x1404b49d0",
+    "0x1404b7309",
+    "0x1404b8288",
+    "0x1404b8a3a",
+    "0x1404b95d2",
+    "0x1404b996e",
+    "0x1404ba111",
+    "0x1404ba6bd",
+    "0x1404ba880",
+    "0x1404bb024",
+    "0x1404bb3d2",
+    "0x1404bbc09",
+    "0x1404bc74f",
+    "0x1404bfb39",
+    "0x1404c152a",
+    "0x1404c1754",
+    "0x1404c1925",
+    "0x1404c1af7",
+    "0x1404c1c9f",
+    "0x1404c1df7",
+    "0x1404c2030",
+    "0x1404c2091",
+    "0x1404c2109",
+    "0x1404c23d5",
+    "0x1404c25e9",
+    "0x1404c2693",
+    "0x1404c288a",
+    "0x1404c2c97",
+    "0x1404c49d6",
+    "0x1404c49f8",
+    "0x1404c4cb4",
+    "0x1404c5052",
+    "0x1404c5344",
+    "0x1404c5709",
+    "0x1404c5f6e",
+    "0x1404c613d",
+    "0x1404c66d4",
+    "0x1404c675f",
+    "0x1404c6ce1",
+    "0x1404c6e46",
+    "0x1404c6f7e",
+    "0x1404c7096",
+    "0x1404c71f2",
+    "0x1404c730c",
+    "0x1404c7a73",
+    "0x1404c7e2f",
+    "0x1404c7f85",
+    "0x1404c8148",
+    "0x1404c842d",
+    "0x1404c85a0",
+    "0x1404c8a5a",
+    "0x1404c8c01",
+    "0x1404c903f",
+    "0x1404c95e5",
+    "0x1404c9c3b",
+    "0x1404ca3eb",
+    "0x1404cad71",
+    "0x1404cb194",
+    "0x1404cb25d",
+    "0x1404cb385",
+    "0x1404cb8f7",
+    "0x1404cbb92",
+    "0x1404cbc8c",
+    "0x1404cbf0f",
+    "0x140599b3c",
+    "0x1405ab065",
+    "0x1405e006d",
+    "0x14067bb4a"
+  ]
+}

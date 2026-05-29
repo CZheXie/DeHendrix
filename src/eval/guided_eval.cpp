@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 #include <algorithm>
 
 #ifdef DEOBF_HAS_CAPSTONE
@@ -13,6 +14,7 @@ namespace deobf {
 
 const char* eval_result_name(EvalResult r) {
     switch (r) {
+        case EvalResult::IN_PROGRESS:          return "IN_PROGRESS";
         case EvalResult::RET:                  return "RET";
         case EvalResult::VMEXIT_RET:           return "VMEXIT_RET";
         case EvalResult::VMEXIT_CALL:          return "VMEXIT_CALL";
@@ -45,7 +47,13 @@ void GuidedEvaluator::add_safe_range(uint64_t start, uint64_t end) {
 
 void GuidedEvaluator::try_promote_load(Instruction& instr) const {
     if (instr.op != Op::LOAD || instr.operands.empty()) return;
-    auto* addr = as_const(instr.operands[0]);
+    auto* addr = get_const(instr.operands[0]);
+    if (!addr) {
+        auto im = build_instr_map(func_);
+        Value resolved_addr = resolve(instr.operands[0], im);
+        addr = get_const(resolved_addr);
+        if (addr) instr.operands[0] = resolved_addr;
+    }
     if (!addr || !memory_.is_safe(addr->value)) return;
     auto val = memory_.load_u64(addr->value);
     if (val) {
@@ -70,12 +78,27 @@ bool GuidedEvaluator::is_in_image(uint64_t va) const {
 std::optional<uint64_t> GuidedEvaluator::resolve_vpc() const {
     auto it = state_.regs.find(vpc_reg_);
     if (it == state_.regs.end()) return std::nullopt;
-    auto* c = as_const(it->second);
+    auto* c = get_const(it->second);
     if (c) return c->value & MASK64;
     auto im = build_instr_map(func_);
     Value resolved = resolve(it->second, im);
-    auto* rc = as_const(resolved);
+    auto* rc = get_const(resolved);
     if (rc) return rc->value & MASK64;
+
+    // Try to resolve through LOAD chains: if VPC points to a LOAD from safe mem
+    auto* ref = get_instrref(resolved);
+    if (ref) {
+        auto iit = im.find(ref->id);
+        if (iit != im.end() && iit->second->op == Op::LOAD &&
+            !iit->second->operands.empty()) {
+            Value load_addr = resolve(iit->second->operands[0], im);
+            auto* addr_c = get_const(load_addr);
+            if (addr_c && memory_.is_safe(addr_c->value)) {
+                auto val = memory_.load_u64(addr_c->value);
+                if (val) return *val & MASK64;
+            }
+        }
+    }
     return std::nullopt;
 }
 
@@ -83,11 +106,11 @@ std::optional<uint64_t> GuidedEvaluator::resolve_jmp_target() const {
     for (auto it = func_.instrs.rbegin(); it != func_.instrs.rend(); ++it) {
         if (it->op == Op::JMP || it->op == Op::CALL) {
             if (it->operands.empty()) return std::nullopt;
-            auto* c = as_const(it->operands[0]);
+            auto* c = get_const(it->operands[0]);
             if (c) return c->value & MASK64;
             auto im = build_instr_map(func_);
             Value resolved = resolve(it->operands[0], im);
-            auto* rc = as_const(resolved);
+            auto* rc = get_const(resolved);
             if (rc) return rc->value & MASK64;
             return std::nullopt;
         }
@@ -98,7 +121,7 @@ std::optional<uint64_t> GuidedEvaluator::resolve_jmp_target() const {
 std::optional<EvalResult> GuidedEvaluator::check_vmexit() const {
     auto it = state_.regs.find("rsp");
     if (it == state_.regs.end()) return std::nullopt;
-    auto* c = as_const(it->second);
+    auto* c = get_const(it->second);
     if (!c) return std::nullopt;
     constexpr uint64_t INIT_RSP = 0x7FFFFFFFD000ULL;
     uint64_t delta = c->value - INIT_RSP;
@@ -114,6 +137,15 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
     int steps = 0;
     uint64_t va = start_va;
 
+    // Seed a concrete stack pointer and mark the stack window as a safe range.
+    // Without this, rsp stays symbolic, every stack address is symbolic, and
+    // outgoing stack arguments / spills (e.g. the VM bytecode pointer passed
+    // into the dispatch helper and re-read via [rbp+0xA0]) can never be
+    // concretized -> the VPC stays symbolic and dispatch is UNRESOLVED.
+    constexpr uint64_t INIT_RSP = 0x7FFFFFFFD000ULL;
+    state_.set_reg("rsp", Const(INIT_RSP));
+    add_safe_range(INIT_RSP - 0x00200000ULL, INIT_RSP + 0x00010000ULL);
+
     csh handle;
     if (cs_open(CS_ARCH_X86, CS_MODE_64, &handle) != CS_ERR_OK) {
         report.result = EvalResult::OUT_OF_BOUNDS;
@@ -124,6 +156,7 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
     while (steps < max_steps) {
         if (visited_.count(va)) {
             if (!dispatcher_va_) dispatcher_va_ = va;
+
 
             if (va == *dispatcher_va_) {
                 auto cur_vpc = resolve_vpc();
@@ -142,7 +175,7 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
                 }
 
                 if (!cur_vpc && !last_vpc_ && vm_insn_count_ > 0) {
-                    report.result = EvalResult::VPC_UNRESOLVED;
+                    report.result = EvalResult::INNER_LOOP;
                     break;
                 }
 
@@ -186,6 +219,12 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
             std::string m(insn_arr[i].mnemonic);
             if (m == "ret") {
                 run_to_convergence(func_, 8);
+                auto ret_target = resolve_jmp_target();
+                if (ret_target && memory_.is_safe(*ret_target) && !dispatcher_va_) {
+                    va = *ret_target;
+                    hit_term = true;
+                    break;
+                }
                 auto vmexit = check_vmexit();
                 report.result = vmexit.value_or(EvalResult::RET);
                 report.stop_va = insn_arr[i].address;
@@ -199,14 +238,33 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
         }
         cs_free(insn_arr, count);
 
-        for (auto& instr : func_.instrs)
-            try_promote_load(instr);
+        // Iterative promote-optimize cycle: promote LOADs → optimize → promote more
+        for (int promote_round = 0; promote_round < 3; ++promote_round) {
+            bool promoted_any = false;
+            auto store_im = build_instr_map(func_);
+            for (auto& instr : func_.instrs) {
+                // Apply concrete stores into ByteMemory (in program order) so that
+                // later loads from the same address can be promoted. Gated by
+                // is_safe so we only model stack / VM-private regions.
+                if (instr.op == Op::STORE && instr.operands.size() >= 2) {
+                    Value addr_v = resolve(instr.operands[0], store_im);
+                    Value val_v  = resolve(instr.operands[1], store_im);
+                    auto* ac = get_const(addr_v);
+                    auto* vc = get_const(val_v);
+                    if (ac && vc && memory_.is_safe(ac->value))
+                        memory_.store_u64(ac->value, vc->value);
+                }
+                if (instr.op == Op::LOAD) {
+                    Op old_op = instr.op;
+                    try_promote_load(instr);
+                    if (instr.op != old_op) promoted_any = true;
+                }
+            }
+            run_to_convergence(func_, 8);
+            if (!promoted_any) break;
+        }
 
-        run_to_convergence(func_, 8);
-
-        if (report.result == EvalResult::RET ||
-            report.result == EvalResult::VMEXIT_RET ||
-            report.result == EvalResult::VMEXIT_CALL) {
+        if (report.result != EvalResult::IN_PROGRESS) {
             break;
         }
 
@@ -222,11 +280,11 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
                     branch.vjcc_va = va;
                     // Try to extract taken/not-taken VPC values from the CJMP operands
                     if (it->operands.size() >= 2) {
-                        auto* t = as_const(it->operands[1]);
+                        auto* t = get_const(it->operands[1]);
                         if (t) branch.vpc_taken = t->value;
                     }
                     if (it->operands.size() >= 3) {
-                        auto* f_val = as_const(it->operands[2]);
+                        auto* f_val = get_const(it->operands[2]);
                         if (f_val) branch.vpc_not_taken = f_val->value;
                     }
                     vjcc_branches_.push_back(branch);
@@ -249,11 +307,14 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
         va = *target;
     }
 
-    if (steps >= max_steps && report.result == EvalResult{}) {
+    if (steps >= max_steps && report.result == EvalResult::IN_PROGRESS) {
         report.result = EvalResult::MAX_STEPS;
     }
 
     cs_close(&handle);
+
+    // Final high-iteration optimization to maximize constant propagation
+    run_to_convergence(func_, 32);
 
     report.stop_va = va;
     report.steps = steps;

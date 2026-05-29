@@ -38,15 +38,41 @@ Instruction& LiftState::emit(Op op, std::vector<Value> operands,
 
 static const std::unordered_map<x86_reg, std::string>& gpr64_map() {
     static const std::unordered_map<x86_reg, std::string> m = {
+        // 64-bit
         {X86_REG_RAX, "rax"}, {X86_REG_RCX, "rcx"}, {X86_REG_RDX, "rdx"},
         {X86_REG_RBX, "rbx"}, {X86_REG_RSP, "rsp"}, {X86_REG_RBP, "rbp"},
         {X86_REG_RSI, "rsi"}, {X86_REG_RDI, "rdi"},
         {X86_REG_R8,  "r8"},  {X86_REG_R9,  "r9"},  {X86_REG_R10, "r10"},
         {X86_REG_R11, "r11"}, {X86_REG_R12, "r12"}, {X86_REG_R13, "r13"},
         {X86_REG_R14, "r14"}, {X86_REG_R15, "r15"},
+        // 32-bit → treat as 64-bit parent (zero-extend semantics)
         {X86_REG_EAX, "rax"}, {X86_REG_ECX, "rcx"}, {X86_REG_EDX, "rdx"},
         {X86_REG_EBX, "rbx"}, {X86_REG_ESP, "rsp"}, {X86_REG_EBP, "rbp"},
         {X86_REG_ESI, "rsi"}, {X86_REG_EDI, "rdi"},
+        {X86_REG_R8D,  "r8"},  {X86_REG_R9D,  "r9"},  {X86_REG_R10D, "r10"},
+        {X86_REG_R11D, "r11"}, {X86_REG_R12D, "r12"}, {X86_REG_R13D, "r13"},
+        {X86_REG_R14D, "r14"}, {X86_REG_R15D, "r15"},
+        // 16-bit
+        {X86_REG_AX, "rax"}, {X86_REG_CX, "rcx"}, {X86_REG_DX, "rdx"},
+        {X86_REG_BX, "rbx"}, {X86_REG_SP, "rsp"}, {X86_REG_BP, "rbp"},
+        {X86_REG_SI, "rsi"}, {X86_REG_DI, "rdi"},
+        {X86_REG_R8W,  "r8"},  {X86_REG_R9W,  "r9"},  {X86_REG_R10W, "r10"},
+        {X86_REG_R11W, "r11"}, {X86_REG_R12W, "r12"}, {X86_REG_R13W, "r13"},
+        {X86_REG_R14W, "r14"}, {X86_REG_R15W, "r15"},
+        // 8-bit low
+        {X86_REG_AL, "rax"}, {X86_REG_CL, "rcx"}, {X86_REG_DL, "rdx"},
+        {X86_REG_BL, "rbx"}, {X86_REG_SPL, "rsp"}, {X86_REG_BPL, "rbp"},
+        {X86_REG_SIL, "rsi"}, {X86_REG_DIL, "rdi"},
+        {X86_REG_R8B,  "r8"},  {X86_REG_R9B,  "r9"},  {X86_REG_R10B, "r10"},
+        {X86_REG_R11B, "r11"}, {X86_REG_R12B, "r12"}, {X86_REG_R13B, "r13"},
+        {X86_REG_R14B, "r14"}, {X86_REG_R15B, "r15"},
+        // 8-bit high
+        {X86_REG_AH, "rax"}, {X86_REG_CH, "rcx"}, {X86_REG_DH, "rdx"},
+        {X86_REG_BH, "rbx"},
+        // RIP
+        {X86_REG_RIP, "rip"}, {X86_REG_EIP, "rip"},
+        // EFLAGS
+        {X86_REG_EFLAGS, "rflags"},
     };
     return m;
 }
@@ -58,20 +84,31 @@ static std::string reg_name(x86_reg r) {
     return "unk_" + std::to_string(static_cast<int>(r));
 }
 
+static bool is_rip(x86_reg r) {
+    return r == X86_REG_RIP || r == X86_REG_EIP;
+}
+
 static Value op_value(const cs_insn* insn, int idx, LiftState& state) {
     auto& op = insn->detail->x86.operands[idx];
     std::ostringstream va_str;
     va_str << "0x" << std::hex << insn->address;
 
     if (op.type == X86_OP_REG) {
+        if (is_rip(static_cast<x86_reg>(op.reg)))
+            return Const((insn->address + insn->size) & MASK64);
         return state.get_reg(reg_name(static_cast<x86_reg>(op.reg)));
     }
     if (op.type == X86_OP_IMM) {
         return Const(static_cast<uint64_t>(op.imm) & MASK64);
     }
     if (op.type == X86_OP_MEM) {
-        Value base_val = op.mem.base ? state.get_reg(reg_name(static_cast<x86_reg>(op.mem.base)))
-                                     : Value(Const(0));
+        Value base_val;
+        if (op.mem.base && is_rip(static_cast<x86_reg>(op.mem.base)))
+            base_val = Const((insn->address + insn->size) & MASK64);
+        else if (op.mem.base)
+            base_val = state.get_reg(reg_name(static_cast<x86_reg>(op.mem.base)));
+        else
+            base_val = Const(0);
         Value disp_val = Const(static_cast<uint64_t>(op.mem.disp) & MASK64);
         auto& addr_instr = state.emit(Op::ADD, {base_val, disp_val}, {{"addr_calc", "1"}});
         Value addr_ref = addr_instr.ref();
@@ -140,9 +177,13 @@ void lift_insn(const cs_insn* insn, LiftState& state) {
         auto& dst_op = insn->detail->x86.operands[0];
         auto& mem_op = insn->detail->x86.operands[1];
         if (mem_op.type == X86_OP_MEM) {
-            Value base_val = mem_op.mem.base
-                ? state.get_reg(reg_name(static_cast<x86_reg>(mem_op.mem.base)))
-                : Value(Const(0));
+            Value base_val;
+            if (mem_op.mem.base && is_rip(static_cast<x86_reg>(mem_op.mem.base)))
+                base_val = Const((insn->address + insn->size) & MASK64);
+            else if (mem_op.mem.base)
+                base_val = state.get_reg(reg_name(static_cast<x86_reg>(mem_op.mem.base)));
+            else
+                base_val = Const(0);
             Value disp_val = Const(static_cast<uint64_t>(mem_op.mem.disp) & MASK64);
             auto& result = state.emit(Op::ADD, {base_val, disp_val});
             Value result_ref = result.ref();
@@ -192,6 +233,15 @@ void lift_insn(const cs_insn* insn, LiftState& state) {
 
     if (mnem == "call" && op_count >= 1) {
         Value target = op_value(insn, 0, state);
+        // x86-64 `call` pushes the return address (rsp -= 8; [rsp] = next_va).
+        // Modeling this is required so a followed callee's stack-argument offsets
+        // (e.g. ACE VM dispatch reading the bytecode/VPC via [rbp+0xA0]) resolve
+        // to concrete values instead of staying symbolic.
+        uint64_t ret_va = (insn->address + insn->size) & MASK64;
+        Value rsp = state.get_reg("rsp");
+        auto& new_rsp = state.emit(Op::SUB, {rsp, Const(8)});
+        state.emit(Op::STORE, {new_rsp.ref(), Const(ret_va)}, {{"va", va_str.str()}});
+        state.set_reg("rsp", new_rsp.ref());
         state.emit(Op::CALL, {target}, {{"va", va_str.str()}});
         return;
     }

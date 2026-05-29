@@ -44,10 +44,10 @@ using Value = std::variant<Const, SymReg, SymMem, InstrRef>;
 inline bool is_const(const Value& v) { return std::holds_alternative<Const>(v); }
 inline bool is_instrref(const Value& v) { return std::holds_alternative<InstrRef>(v); }
 
-inline const Const* as_const(const Value& v) {
+inline const Const* get_const(const Value& v) {
     return std::get_if<Const>(&v);
 }
-inline const InstrRef* as_instrref(const Value& v) {
+inline const InstrRef* get_instrref(const Value& v) {
     return std::get_if<InstrRef>(&v);
 }
 

@@ -16,7 +16,7 @@ static void test_const_promote_and_fold() {
 
     auto& last = f.instrs.back();
     assert(last.op == Op::CONST);
-    auto* c = as_const(last.operands[0]);
+    auto* c = get_const(last.operands[0]);
     assert(c && c->value == 7);
     std::cout << "  PASS: const_promote + const_fold -> 3+4=7\n";
 }
@@ -57,7 +57,7 @@ static void test_insn_combine_xor_self() {
 
     assert(insn_combine_pass(f));
     assert(f.instrs.back().op == Op::CONST);
-    auto* c = as_const(f.instrs.back().operands[0]);
+    auto* c = get_const(f.instrs.back().operands[0]);
     assert(c && c->value == 0);
     std::cout << "  PASS: insn_combine x^x = 0\n";
 }
@@ -73,7 +73,7 @@ static void test_convergence() {
 
     auto& last_ret = f.instrs.back();
     assert(last_ret.op == Op::RET);
-    auto* c = as_const(last_ret.operands[0]);
+    auto* c = get_const(last_ret.operands[0]);
     assert(c && c->value == 30);
     std::cout << "  PASS: convergence reduces 10+20 to RET #30 in "
               << report.iterations << " iterations\n";
@@ -91,7 +91,7 @@ static void test_mem_forward() {
 
     auto& load = f.instrs.back();
     assert(load.op == Op::CONST);
-    auto* c = as_const(load.operands[0]);
+    auto* c = get_const(load.operands[0]);
     assert(c && c->value == 42);
     std::cout << "  PASS: mem_forward store 42 -> load = 42\n";
 }

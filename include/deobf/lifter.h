@@ -22,13 +22,17 @@ public:
                       std::unordered_map<std::string, std::string> ann = {});
 };
 
-#ifdef DEOBF_HAS_CAPSTONE
-struct cs_insn;
+} // namespace deobf
 
-void lift_insn(const cs_insn* insn, LiftState& state);
+#ifdef DEOBF_HAS_CAPSTONE
+#include <capstone/capstone.h>
+
+namespace deobf {
+
+void lift_insn(const ::cs_insn* insn, LiftState& state);
 
 void lift_block(const uint8_t* code, size_t code_len, uint64_t base_va,
                 Function& func, LiftState& state, int max_instrs = 500);
-#endif
 
 } // namespace deobf
+#endif

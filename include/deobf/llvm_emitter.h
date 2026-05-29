@@ -23,6 +23,7 @@ private:
     struct EmitCtx {
         std::ostringstream os;
         std::unordered_map<uint32_t, std::string> val_names;
+        const std::unordered_map<uint32_t, const Instruction*>* instr_map = nullptr;
         int tmp_counter = 0;
 
         std::string val_ref(const Value& v);

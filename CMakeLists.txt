@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include(FetchContent)
+
 # --- Capstone (disassembler) ---
 find_package(PkgConfig QUIET)
 if(PkgConfig_FOUND)
@@ -20,6 +22,26 @@ if(NOT CAPSTONE_FOUND)
     if(CAPSTONE_INCLUDE_DIRS AND CAPSTONE_LIBRARIES)
         set(CAPSTONE_FOUND TRUE)
     endif()
+endif()
+
+# FetchContent fallback: auto-download capstone if not found
+if(NOT CAPSTONE_FOUND)
+    message(STATUS "Capstone not found locally — fetching via FetchContent...")
+    set(CAPSTONE_BUILD_STATIC ON CACHE BOOL "" FORCE)
+    set(CAPSTONE_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+    set(CAPSTONE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(CAPSTONE_BUILD_CSTOOL OFF CACHE BOOL "" FORCE)
+    set(CAPSTONE_ARCHITECTURE_DEFAULT OFF CACHE BOOL "" FORCE)
+    set(CAPSTONE_X86_SUPPORT ON CACHE BOOL "" FORCE)
+
+    FetchContent_Declare(capstone
+        GIT_REPOSITORY https://github.com/capstone-engine/capstone.git
+        GIT_TAG        5.0.6
+        GIT_SHALLOW    TRUE
+    )
+    FetchContent_MakeAvailable(capstone)
+    set(CAPSTONE_FOUND TRUE)
+    set(CAPSTONE_FETCHED TRUE)
 endif()
 
 # --- Core library ---
@@ -39,9 +61,13 @@ target_include_directories(deobf PUBLIC
 )
 
 if(CAPSTONE_FOUND)
-    target_include_directories(deobf PRIVATE ${CAPSTONE_INCLUDE_DIRS})
-    target_link_libraries(deobf PRIVATE ${CAPSTONE_LIBRARIES})
-    target_compile_definitions(deobf PRIVATE DEOBF_HAS_CAPSTONE=1)
+    if(CAPSTONE_FETCHED)
+        target_link_libraries(deobf PUBLIC capstone)
+    else()
+        target_include_directories(deobf PRIVATE ${CAPSTONE_INCLUDE_DIRS})
+        target_link_libraries(deobf PRIVATE ${CAPSTONE_LIBRARIES})
+    endif()
+    target_compile_definitions(deobf PUBLIC DEOBF_HAS_CAPSTONE=1)
 else()
     message(WARNING "Capstone not found — lifter will not compile. "
                     "Set CAPSTONE_DIR or install capstone.")
@@ -50,9 +76,6 @@ endif()
 # --- CLI tool ---
 add_executable(dehex_cli tools/cli_main.cpp)
 target_link_libraries(dehex_cli PRIVATE deobf)
-if(CAPSTONE_FOUND)
-    target_link_libraries(dehex_cli PRIVATE ${CAPSTONE_LIBRARIES})
-endif()
 
 # --- pybind11 bindings ---
 option(DEOBF_BUILD_PYTHON "Build Python bindings" OFF)
@@ -61,12 +84,6 @@ if(DEOBF_BUILD_PYTHON)
     if(pybind11_FOUND)
         pybind11_add_module(pydeobf bindings/python/pydeobf.cpp)
         target_link_libraries(pydeobf PRIVATE deobf)
-        target_compile_definitions(pydeobf PRIVATE DEOBF_HAS_PYBIND11=1)
-        if(CAPSTONE_FOUND)
-            target_include_directories(pydeobf PRIVATE ${CAPSTONE_INCLUDE_DIRS})
-            target_link_libraries(pydeobf PRIVATE ${CAPSTONE_LIBRARIES})
-            target_compile_definitions(pydeobf PRIVATE DEOBF_HAS_CAPSTONE=1)
-        endif()
     else()
         message(WARNING "pybind11 not found — Python bindings disabled.")
     endif()
