@@ -10,10 +10,20 @@ File -> Script file. It registers the action + hotkey on load.
 
   Hotkey:  Ctrl-Shift-D   (Devirtualize function under cursor)
 
+AI-callable interface (non-interactive, for agents / IDALib / IDA-MCP bridges):
+
+  import dehendrix_ida as d
+  d.devirt(ea=None, mode="auto"|"vm", vpc_reg="r11", safe_ranges=["0xA:0xB"])
+  d.devirt_json(...)   # same, returns a JSON string
+
+Both return {ok, entry, mode, cli, command, output[, error]} with no GUI; an
+agent can drive them headlessly and parse the structured result.
+
 Configuration (environment):
   DEHEX_CLI   path to dehex_cli(.exe). If unset, common build paths are tried,
               otherwise you are prompted to locate it (the choice is remembered).
 """
+import json
 import os
 import subprocess
 
@@ -72,6 +82,68 @@ def _show_viewer(title, text):
     v.Show()
 
 
+def _build_args(cli, path, base, start, mode, vpc_reg, safe_ranges, emit_llvm):
+    if mode == "vm":
+        args = [cli, "vm-cfg", "--image", path, "--base", hex(base),
+                "--entry", hex(start), "--vpc-reg", vpc_reg or "r11"]
+        for r in (safe_ranges or []):
+            args += ["--safe", r]
+    else:  # native
+        args = [cli, "cfg", "--image", path, "--base", hex(base),
+                "--entry", hex(start)]
+    if emit_llvm:
+        args += ["--emit-llvm"]
+    return args
+
+
+def _run_devirt(path, base, start, mode, vpc_reg, safe_ranges, emit_llvm):
+    cli = _find_cli()
+    if not cli:
+        return {"ok": False, "error": "dehex_cli not found (set DEHEX_CLI)"}
+    args = _build_args(cli, path, base, start, mode, vpc_reg, safe_ranges, emit_llvm)
+    out = _run_cli(args)
+    return {
+        "ok": not out.startswith("ERROR"),
+        "entry": hex(start),
+        "mode": mode,
+        "cli": cli,
+        "command": " ".join(args),
+        "output": out,
+    }
+
+
+# --- AI-callable API (non-interactive, structured result) ---
+
+def devirt(ea=None, mode="auto", vpc_reg="r11", safe_ranges=None, emit_llvm=True):
+    """Devirtualize the function containing `ea` (default: cursor) and return a
+    JSON-serializable dict. Intended for AI agents / IDALib / IDA-MCP bridges:
+    no GUI prompts.
+
+    mode: "auto"/"native" -> native CFG recovery; "vm" -> VM devirtualization.
+    safe_ranges: list of "0xSTART:0xEND" strings (VM bytecode regions).
+    Returns: {ok, entry, mode, cli, command, output[, error]}.
+    """
+    if ea is None:
+        ea = idc.here()
+    func = ida_funcs.get_func(ea)
+    if not func:
+        return {"ok": False, "error": "no function at 0x%X" % ea}
+    path = ida_nalt.get_input_file_path()
+    if not path or not os.path.exists(path):
+        return {"ok": False, "error": "input file not found: %r" % path}
+    base = idaapi.get_imagebase()
+    m = "vm" if mode == "vm" else "native"
+    return _run_devirt(path, base, func.start_ea, m, vpc_reg, safe_ranges, emit_llvm)
+
+
+def devirt_json(ea=None, mode="auto", vpc_reg="r11", safe_ranges=None, emit_llvm=True):
+    """Same as devirt() but returns a JSON string (handy for string-based
+    AI / MCP bridges)."""
+    return json.dumps(devirt(ea, mode, vpc_reg, safe_ranges, emit_llvm), indent=2)
+
+
+# --- Interactive entry (human; GUI prompts) ---
+
 def devirt_current():
     ea = idc.here()
     func = ida_funcs.get_func(ea)
@@ -86,31 +158,26 @@ def devirt_current():
             return
         path = picked
     base = idaapi.get_imagebase()
-    cli = _find_cli()
-    if not cli:
+    if not _find_cli():
         ida_kernwin.warning("dehex_cli not found (set DEHEX_CLI).")
         return
 
-    mode = ida_kernwin.ask_buttons(
+    btn = ida_kernwin.ask_buttons(
         "Native CFG", "VM devirt", "Cancel", idaapi.ASKBTN_YES,
         "DeHendrix: recover function at 0x%X as?" % start)
-    if mode == idaapi.ASKBTN_CANCEL:
+    if btn == idaapi.ASKBTN_CANCEL:
         return
 
-    if mode == idaapi.ASKBTN_YES:
-        args = [cli, "cfg", "--image", path, "--base", hex(base),
-                "--entry", hex(start), "--emit-llvm"]
+    if btn == idaapi.ASKBTN_YES:
+        res = _run_devirt(path, base, start, "native", "r11", None, True)
     else:
         vpc = ida_kernwin.ask_str("r11", 0, "VPC register") or "r11"
         safe = ida_kernwin.ask_str("", 0,
                 "Safe ranges 0xSTART:0xEND (space-separated, optional)") or ""
-        args = [cli, "vm-cfg", "--image", path, "--base", hex(base),
-                "--entry", hex(start), "--vpc-reg", vpc]
-        for r in safe.split():
-            args += ["--safe", r]
+        res = _run_devirt(path, base, start, "vm", vpc, safe.split(), True)
 
-    ida_kernwin.msg("[DeHendrix] %s\n" % " ".join(args))
-    out = _run_cli(args)
+    out = res.get("output", res.get("error", ""))
+    ida_kernwin.msg("[DeHendrix] %s\n" % res.get("command", ""))
     _show_viewer("DeHendrix 0x%X" % start, out)
     ida_kernwin.msg(out + "\n")
     try:
