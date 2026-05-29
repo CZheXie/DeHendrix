@@ -131,7 +131,7 @@ clang -O2 -emit-llvm -S out.ll -o out.opt.ll
 
 ---
 
-## 方法论参考
+## 参考
 
 - back.engineering — [Static Devirtualization of Themida](https://back.engineering/blog/09/05/2026/)
 - SATURN — [arXiv:1909.01752](https://arxiv.org/pdf/1909.01752)
