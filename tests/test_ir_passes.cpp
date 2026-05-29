@@ -1,5 +1,8 @@
 #include "deobf/ir.h"
 #include "deobf/passes.h"
+#ifdef NDEBUG
+#undef NDEBUG   // keep assert() active in Release — these are correctness tests
+#endif
 #include <cassert>
 #include <iostream>
 

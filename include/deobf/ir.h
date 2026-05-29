@@ -94,6 +94,9 @@ public:
                       std::unordered_map<std::string, std::string> ann = {});
 
     uint32_t next_id() const { return next_id_; }
+    /// Set the next result_id to be assigned. Used to give instructions emitted
+    /// across multiple segment evaluations a globally-unique id space.
+    void set_next_id(uint32_t id) { next_id_ = id; }
     std::string dump() const;
 
 private:
