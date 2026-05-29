@@ -2,25 +2,22 @@
 
 # DeHendrix
 
-**Static binary devirtualization & deobfuscation in C++17.**
-Give it a VM-protected (VMProtect / Themida / OLLVM / custom-VM) function and it
-hands back a clean control-flow graph and LLVM IR you can actually read.
+Static devirtualizer / deobfuscator (C++17). Feed it a VM-protected function
+(VMProtect, Themida, OLLVM, custom VMs); get back a control-flow graph and LLVM IR.
 
-> Methodology: Guided Symbolic Evaluation (back.engineering) + LLVM-based
-> deobfuscation (SATURN). The thesis is one line — **if obfuscation is
-> compiler-based, so is deobfuscation.**
+Approach: lift to SSA, then run optimizer passes that collapse the VM
+interpreter — same line as SATURN and the back.engineering work. If obfuscation
+is a compiler pass, so is deobfuscation.
 
 ---
 
 ## What it does
 
-A virtualizing protector turns a function into a bytecode program plus an
-interpreter (dispatcher + handlers). Reading the handlers by hand does not
-scale: every version bump reshuffles the opcode tables and dispatch logic.
-DeHendrix takes the opposite route — it lifts the native code to SSA IR and lets
-a small set of optimization passes *collapse the interpreter*, exactly the way a
-compiler would fold away dead scaffolding. Almost no VM-specific knowledge is
-needed; the only place it shows up is control flow (virtual branches + VM exit).
+A virtualizer turns a function into bytecode plus an interpreter (dispatcher +
+handlers). Reversing handlers by hand doesn't scale — they get reshuffled every
+version. DeHendrix lifts the native code to SSA IR and runs compiler-style passes
+that fold the interpreter away. The only VM-specific part is control flow:
+virtual branches and VM exit.
 
 ---
 
@@ -43,19 +40,17 @@ flowchart TB
   CLI --> IDA["IDA plugin"]
 ```
 
-The core engine is a single static library (`deobf`). Everything else — the CLI,
-the MCP server, the IDA plugin — is a thin shell over it.
+The engine is one static library (`deobf`). The CLI, MCP server and IDA plugin
+are thin shells over it.
 
 ---
 
 ## How it works
 
-Lifting starts with every register and flag symbolic, except the stack pointer,
-which is given a concrete value (so stack accesses fold for free). The engine
-lifts a block, promotes loads from VM-bytecode regions to constants, runs the
-value passes to a fixed point, and reads off the next instruction pointer. When
-the next IP cannot be made concrete, one of two things is true: the optimizer
-has not run far enough, or the branch genuinely has two targets (a virtual JCC).
+Lifting starts fully symbolic except RSP, which is concrete so stack accesses
+fold. Per block: lift, promote bytecode reads to constants, run the value passes
+to a fixpoint, read the next IP. If the IP won't go concrete, either the
+optimizer needs another round or the branch has two targets (a virtual JCC).
 
 ```mermaid
 flowchart TB
@@ -63,21 +58,18 @@ flowchart TB
   B --> C["Value passes to convergence<br/>const-fold / mem-forward / insn-combine"]
   C --> D{"Next IP concrete?"}
   D -- yes --> E["Follow target"] --> A
-  D -- "no: VMEXIT" --> H["RET / CALL<br/>(classified by RSP delta)"]
-  D -- "no: VJCC" --> F["extract two next-VPCs<br/>substitute cond = 1 / 0, re-fold"]
-  F --> G["fork -> explore both arms"]
+  D -- "no: VMEXIT" --> H["RET / CALL<br/>(by RSP delta)"]
+  D -- "no: VJCC" --> F["two next-VPCs<br/>cond = 1 / 0, re-fold"]
+  F --> G["fork -> both arms"]
   G --> I["CFGRecovery<br/>VPC-keyed blocks + phi"]
   H --> I
   I --> OUT["multi-block CFG + LLVM IR"]
 ```
 
-For virtual branches the two next-VPCs are recovered generically: the VPC is a
-(usually branchless) function of the VM flag, so substituting the condition with
-`1` and `0` and constant-folding yields both targets — no SMT solver needed.
-Blocks are keyed by VPC value, back-edges are detected so loops are not unrolled,
-and registers that disagree across predecessors get phi nodes. In full-SSA mode
-each block is evaluated with symbolic entry values that are rewritten to phi
-results, closing loop def-use chains.
+Virtual branch targets come from substituting the VM flag with `1` and `0` and
+folding — no solver. Blocks are keyed by VPC, back-edges stop loop unrolling, and
+registers that disagree across predecessors get phi nodes. Full-SSA mode rewrites
+each block's symbolic entry values to those phi results, closing loop def-use.
 
 ---
 
@@ -85,28 +77,28 @@ results, closing loop def-use chains.
 
 | Module | What |
 |---|---|
-| `src/ir`, `include/deobf/ir.h` | SSA IR: 28 opcodes, `Const/SymReg/SymMem/InstrRef` values, `SELECT` |
-| `src/lifter` | x64 lifter: capstone → IR (mov/arith/lea/push/pop/call/ret/jcc/setcc/cmov/…) |
-| `src/passes` | optimizer: const promote/fold, mem-forward, insn-combine, branch-fold, DCE |
-| `src/memory` | ByteMemory: byte-level load/store tracking + safe-range constant promotion |
-| `src/eval` | Guided Evaluator: the lift→optimize→follow loop; VPC tracking; VMEXIT detection |
-| `src/eval/segment_eval.cpp` | CFG recovery: `recover_native_cfg`, `recover_vm_cfg`, `extract_vjcc_targets` |
-| `src/ir/cfg.cpp` | CFG: basic blocks, edges, phi, multi-block dump |
-| `src/lower` | LLVM emit: IR → `.ll` (single function and multi-block) |
+| `src/ir`, `include/deobf/ir.h` | SSA IR: 28 opcodes, `Const/SymReg/SymMem/InstrRef`, `SELECT` |
+| `src/lifter` | x64 lifter: capstone → IR (mov/arith/lea/push/pop/call/ret/jcc/setcc/cmov) |
+| `src/passes` | passes: const promote/fold, mem-forward, insn-combine, branch-fold, DCE |
+| `src/memory` | ByteMemory: byte-level load/store + safe-range constant promotion |
+| `src/eval` | Guided Evaluator: lift→optimize→follow loop; VPC tracking; VMEXIT detection |
+| `src/eval/segment_eval.cpp` | `recover_native_cfg`, `recover_vm_cfg`, `extract_vjcc_targets` |
+| `src/ir/cfg.cpp` | CFG: blocks, edges, phi, dump |
+| `src/lower` | LLVM emit: IR → `.ll` |
 | `tools/cli_main.cpp` | CLI: `dehex_cli devirt / cfg / vm-cfg` |
-| `bindings/mcp` | MCP server: exposes the engine to AI agents / automation |
-| `tools/ida` | IDA plugin: devirt the function under the cursor; AI-callable API |
+| `bindings/mcp` | MCP server |
+| `tools/ida` | IDA plugin + AI-callable API |
 
 ---
 
 ## Build
 
-Needs a C++17 compiler, CMake ≥ 3.20, and Capstone (auto-fetched if not found).
+C++17, CMake ≥ 3.20, Capstone (auto-fetched).
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
-ctest --test-dir build            # or run the test_* executables directly
+ctest --test-dir build
 ```
 
 ---
@@ -114,44 +106,40 @@ ctest --test-dir build            # or run the test_* executables directly
 ## Usage
 
 ```bash
-# Native multi-block CFG of a function (entry defaults to the PE entry point):
+# Native CFG (entry defaults to the PE entry point):
 dehex_cli cfg --image program.exe --emit-llvm
 
-# Multi-path VM devirtualization (mark the VM bytecode regions as "safe"):
+# VM devirtualization (--safe marks the VM bytecode regions):
 dehex_cli vm-cfg --image dump.bin --base 0x140000000 --entry 0x14132C758 \
     --vpc-reg r11 --safe 0x140B45000:0x14196B000 --emit-llvm
 
-# Push the recovered IR through the optimizer (collapses residual scaffolding):
+# Optimize the recovered IR:
 dehex_cli cfg --image program.exe --emit-llvm --llvm-out out.ll
 clang -O2 -emit-llvm -S out.ll -o out.opt.ll
 ```
 
-- **MCP** — `python bindings/mcp/dehendrix_mcp.py` exposes `native_cfg`,
-  `vm_devirt`, `vm_devirt_optimized` (runs `clang -O2`), and `optimize_llvm`.
-- **IDA** — drop `tools/ida/dehendrix_ida.py` into `plugins/`; `Ctrl-Shift-D`
-  devirts the function under the cursor. It also exposes a non-interactive
-  `devirt()` / `devirt_json()` API for agents.
+- **MCP** — `python bindings/mcp/dehendrix_mcp.py`: `native_cfg`, `vm_devirt`,
+  `vm_devirt_optimized` (runs `clang -O2`), `optimize_llvm`.
+- **IDA** — `tools/ida/dehendrix_ida.py` in `plugins/`; `Ctrl-Shift-D` on a
+  function. Also exposes `devirt()` / `devirt_json()` for agents.
 
 ---
 
-## Status & limits
+## Status
 
-The goal is **analyzable** output — a readable CFG + LLVM IR for an analyst or
-for IDA/Ghidra — not (yet) a 1:1 reinsertable binary. Recovering native CFGs and
-multi-path VM CFGs (VMProtect-style, cmov/setcc VJCCs) works and is covered by
-tests. Known gaps: Themida's VM (rbp-based VPC, different VJCC handler) is not
-wired in yet; full-SSA rewrite is wired in the generic recovery path but not yet
-the VM path; reinserting clean native code would need a custom backend (LLVM is
-the wrong tool for that last mile — see the back.engineering writeup).
+Output is meant to be **read**, not reinserted (no 1:1 runnable binary yet).
+Working and tested: native CFG recovery, multi-path VM CFG (VMProtect-style,
+cmov/setcc VJCCs), full-SSA in the generic path. Not done: Themida's VM
+(rbp-VPC), full-SSA on the VM path, a native backend for reinsertion.
 
 ---
 
 ## References
 
 - back.engineering — [Static Devirtualization of Themida](https://back.engineering/blog/09/05/2026/)
-- SATURN — [LLVM-based deobfuscation (arXiv:1909.01752)](https://arxiv.org/pdf/1909.01752)
+- SATURN — [arXiv:1909.01752](https://arxiv.org/pdf/1909.01752)
 - Jonathan Salwan — [VMProtect-devirtualization](https://github.com/JonathanSalwan/VMProtect-devirtualization)
-- eversinc33 — [Naive LLVM-based devirtualizer](https://eversinc33.com/2026/05/07/llvm-devirtualizer)
+- eversinc33 — [LLVM devirtualizer](https://eversinc33.com/2026/05/07/llvm-devirtualizer)
 - Thalium — [LLVM-powered devirtualization](https://blog.thalium.re/posts/llvm-powered-devirtualization/)
 
 ## License
