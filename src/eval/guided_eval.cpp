@@ -216,9 +216,9 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
             lift_insn(&insn_arr[i], state_);
             steps++;
 
-            std::string m(insn_arr[i].mnemonic);
+                std::string m(insn_arr[i].mnemonic);
             if (m == "ret") {
-                run_to_convergence(func_, 8);
+                run_fold_convergence(func_, 8);
                 auto ret_target = resolve_jmp_target();
                 if (ret_target && memory_.is_safe(*ret_target) && !dispatcher_va_) {
                     va = *ret_target;
@@ -238,8 +238,12 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
         }
         cs_free(insn_arr, count);
 
-        // Iterative promote-optimize cycle: promote LOADs → optimize → promote more
+        // Iterative optimize-promote cycle. Fold FIRST so that load/store address
+        // expressions (e.g. ADD(vpc_reg, 0)) concretize to constants before we
+        // test them against the safe ranges; otherwise a dispatch that reads its
+        // target via [reg] in the very first block can never be promoted.
         for (int promote_round = 0; promote_round < 3; ++promote_round) {
+            run_fold_convergence(func_, 8);
             bool promoted_any = false;
             auto store_im = build_instr_map(func_);
             for (auto& instr : func_.instrs) {
@@ -260,7 +264,6 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
                     if (instr.op != old_op) promoted_any = true;
                 }
             }
-            run_to_convergence(func_, 8);
             if (!promoted_any) break;
         }
 

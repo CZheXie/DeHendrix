@@ -44,4 +44,11 @@ struct ConvergenceReport {
 
 ConvergenceReport run_to_convergence(Function& f, int max_iters = 32);
 
+/// Value-propagating convergence only: const promotion/folding, memory
+/// forwarding, instruction combination, branch folding. Runs NO dead-code
+/// elimination, so instructions whose results are referenced only through
+/// external register/VM state (not by another instruction) are preserved.
+/// Use this while symbolic state is still live; run full DCE only at the end.
+ConvergenceReport run_fold_convergence(Function& f, int max_iters = 32);
+
 } // namespace deobf

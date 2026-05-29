@@ -283,7 +283,13 @@ std::string LLVMEmitter::emit_cfg_function(const CFGFunction& f,
             ctx.os << "\n";
         }
 
+        // Control-flow ops are rendered by the terminator below; skip them in
+        // the body. A RET in the body already emits the real return value, so
+        // suppress the terminator's fallback `ret i64 0` in that case.
+        bool body_has_ret = false;
         for (auto& instr : bb.instrs) {
+            if (instr.op == Op::JMP || instr.op == Op::CJMP) continue;
+            if (instr.op == Op::RET) body_has_ret = true;
             emit_instr(instr, ctx);
         }
 
@@ -307,7 +313,7 @@ std::string LLVMEmitter::emit_cfg_function(const CFGFunction& f,
                 }
                 break;
             case TermKind::RET:
-                ctx.os << "  ret i64 0\n";
+                if (!body_has_ret) ctx.os << "  ret i64 0\n";
                 break;
             case TermKind::FALLTHROUGH:
                 if (bb.term.fallthrough) {

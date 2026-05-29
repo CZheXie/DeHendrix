@@ -530,4 +530,32 @@ ConvergenceReport run_to_convergence(Function& f, int max_iters) {
     return report;
 }
 
+// Value-propagating passes only — no dead-code elimination, so values that are
+// live solely via external register state survive across blocks.
+static const struct { const char* name; PassFn fn; } FOLD_PASSES[] = {
+    {"const_promote", const_promote_pass},
+    {"mem_forward",   mem_forward_pass},
+    {"const_promote", const_promote_pass},
+    {"const_fold",    const_fold_pass},
+    {"insn_combine",  insn_combine_pass},
+    {"branch_fold",   branch_fold_pass},
+};
+
+ConvergenceReport run_fold_convergence(Function& f, int max_iters) {
+    ConvergenceReport report;
+    report.iterations = 0;
+    for (int it = 0; it < max_iters; ++it) {
+        bool any = false;
+        for (auto& [name, fn] : FOLD_PASSES) {
+            if (fn(f)) {
+                report.pass_hits[name]++;
+                any = true;
+            }
+        }
+        report.iterations = it + 1;
+        if (!any) break;
+    }
+    return report;
+}
+
 } // namespace deobf
