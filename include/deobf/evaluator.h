@@ -62,6 +62,19 @@ public:
 
     void add_safe_range(uint64_t start, uint64_t end);
 
+    /// Inject initial register values, applied after the default register/RSP
+    /// seeding at the start of run(). This lets a caller resume evaluation from
+    /// a known (VPC, register state) — e.g. re-entering the dispatcher on one
+    /// arm of a virtual conditional jump.
+    void set_initial_regs(const std::unordered_map<std::string, Value>& regs) {
+        initial_regs_ = regs;
+    }
+
+    /// Live register state. Valid after run() returns — i.e. the exit state.
+    const std::unordered_map<std::string, Value>& registers() const {
+        return state_.regs;
+    }
+
     EvalReport run(uint64_t start_va, int max_steps = 50000,
                    int max_vm_insns = 2000);
 
@@ -87,6 +100,7 @@ private:
     Function func_;
     LiftState state_;
     ByteMemory memory_;
+    std::unordered_map<std::string, Value> initial_regs_;
     std::unordered_set<uint64_t> visited_;
     std::vector<uint64_t> jmp_trace_;
 

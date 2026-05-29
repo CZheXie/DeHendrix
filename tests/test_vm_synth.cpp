@@ -122,6 +122,22 @@ static void test_threaded_vm_vjcc() {
             CHECK(ok);
             std::cout << "  ok: VM cmov-VJCC -> next VPCs {0x" << std::hex
                       << a << ", 0x" << b << "}" << std::dec << "\n";
+
+            // Step B core mechanic: resume each arm by injecting its VPC into
+            // r11 and re-entering the dispatcher. Both arms must reach VMEXIT.
+            // The dispatcher VA is where the unresolved dispatch stopped.
+            uint64_t disp_va = rep.stop_va;
+            for (uint64_t arm : {a, b}) {
+                GuidedEvaluator ev2(img.data(), img.size(), 0x140000000, "r11");
+                ev2.add_safe_range(0x140003000, 0x140003028);
+                ev2.set_initial_regs({{"r11", Const(arm)}});
+                auto r2 = ev2.run(disp_va, 5000, 50);
+                bool exited = (r2.result == EvalResult::VMEXIT_RET ||
+                               r2.result == EvalResult::RET);
+                CHECK(exited);
+                std::cout << "    resume arm 0x" << std::hex << arm << " from disp 0x"
+                          << disp_va << " -> " << std::dec << eval_result_name(r2.result) << "\n";
+            }
         }
     }
 }

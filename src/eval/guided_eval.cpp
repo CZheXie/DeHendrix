@@ -146,6 +146,9 @@ EvalReport GuidedEvaluator::run(uint64_t start_va, int max_steps, int max_vm_ins
     state_.set_reg("rsp", Const(INIT_RSP));
     add_safe_range(INIT_RSP - 0x00200000ULL, INIT_RSP + 0x00010000ULL);
 
+    // Apply caller-injected register overrides (e.g. a resumed VPC + state).
+    for (const auto& [name, val] : initial_regs_) state_.set_reg(name, val);
+
     csh handle;
     if (cs_open(CS_ARCH_X86, CS_MODE_64, &handle) != CS_ERR_OK) {
         report.result = EvalResult::OUT_OF_BOUNDS;
