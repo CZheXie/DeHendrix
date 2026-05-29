@@ -196,10 +196,85 @@ static void test_loop() {
     std::cout << f.dump() << "\n";
 }
 
+// ---------------------------------------------------------------------------
+// Full-SSA: a counter loop. The body computes i = i + 1 using its symbolic
+// entry value; with full_ssa the body's increment must reference the loop
+// header's phi result (closed def-use), not a pinned predecessor constant.
+// ---------------------------------------------------------------------------
+static void test_full_ssa_loop() {
+    g_next_id = 1;
+
+    SegmentOracle oracle = [](uint64_t vpc, const VMState& in) -> SegmentResult {
+        SegmentResult r;
+        auto iv = [&]() -> Value {
+            const Value* p = in.find("i");
+            return p ? *p : Value(SymReg("i"));
+        };
+        switch (vpc) {
+            case 0x10:  // entry: i = 0
+                r.kind = SegmentKind::Goto;
+                r.next_vpc = 0x20;
+                r.out_state.regs = {{"i", Const(0)}};
+                return r;
+            case 0x20:  // header: branch, pass i through to both arms
+                r.kind = SegmentKind::Branch;
+                r.condition = SymReg("c");
+                r.vpc_taken = 0x30;
+                r.vpc_not_taken = 0x40;
+                r.out_state_taken.regs = {{"i", iv()}};
+                r.out_state_not_taken.regs = {{"i", iv()}};
+                return r;
+            case 0x30: {  // body: i = i + 1
+                Instruction add = mk_instr(Op::ADD, {iv(), Const(1)});
+                r.instrs.push_back(add);
+                r.kind = SegmentKind::Goto;
+                r.next_vpc = 0x20;  // back-edge
+                r.out_state.regs = {{"i", InstrRef(add.result_id)}};
+                return r;
+            }
+            case 0x40:
+                r.kind = SegmentKind::Ret;
+                return r;
+        }
+        return r;
+    };
+
+    CFGRecoveryConfig cfg;
+    cfg.entry_vpc = 0x10;
+    cfg.full_ssa = true;
+    cfg.tracked_regs = {"i"};
+    CFGFunction f = CFGRecovery::recover(oracle, cfg);
+
+    const BasicBlock* header = nullptr;
+    const PhiNode* iphi = nullptr;
+    for (auto& bb : f.blocks) {
+        const PhiNode* p = find_phi(bb, "i");
+        if (p) { header = &bb; iphi = p; }
+    }
+    assert(header && iphi && "expected a loop-header phi for i");
+    assert(iphi->incoming.size() == 2);
+
+    const Instruction* add = nullptr;
+    for (auto& bb : f.blocks)
+        for (auto& in : bb.instrs)
+            if (in.op == Op::ADD) add = &in;
+    assert(add && !add->operands.empty() && "expected the body increment");
+
+    const InstrRef* ref = get_instrref(add->operands[0]);
+    assert(ref && "body increment operand should be an SSA value");
+    assert(ref->id == iphi->result_id &&
+           "full SSA: body i+1 must reference the header phi result");
+
+    std::cout << "  PASS: full-SSA loop -> body i+1 references header phi %v"
+              << iphi->result_id << "\n";
+    std::cout << f.dump() << "\n";
+}
+
 int main() {
     std::cout << "=== libdeobf CFG recovery tests ===\n";
     test_diamond();
     test_loop();
+    test_full_ssa_loop();
     std::cout << "\nAll CFG recovery tests passed!\n";
     return 0;
 }

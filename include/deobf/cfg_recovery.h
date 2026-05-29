@@ -63,6 +63,14 @@ struct CFGRecoveryConfig {
     /// Registers to reconcile with phi nodes at merge points. If empty, the set
     /// is derived from the union of registers seen across all incoming states.
     std::vector<std::string> tracked_regs;
+
+    /// Full-SSA mode. When true (and `tracked_regs` is non-empty), each block is
+    /// evaluated with a *unique symbolic entry value* per tracked register
+    /// (`reg@bbN`), and after phi construction those entry symbols are rewritten
+    /// to the phi result (or the single incoming value / function input). The
+    /// result is real SSA: block IR references phi results and loop def-use
+    /// chains are closed, instead of being pinned to one predecessor's values.
+    bool full_ssa = false;
 };
 
 /// Worklist-driven multi-path CFG recovery.

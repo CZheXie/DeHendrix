@@ -32,6 +32,31 @@ uint32_t max_result_id(const CFGFunction& cfg) {
     return m;
 }
 
+// Rewrite a Value: a SymReg whose name maps in `subst` is replaced.
+Value apply_subst(const Value& v, const std::unordered_map<std::string, Value>& subst) {
+    if (const auto* sr = std::get_if<SymReg>(&v)) {
+        auto it = subst.find(sr->name);
+        if (it != subst.end()) return it->second;
+    }
+    return v;
+}
+
+// Follow chains of symbolic-entry rewrites to their terminal value (phi result,
+// function input, or constant), with a cycle guard.
+void resolve_subst(std::unordered_map<std::string, Value>& subst) {
+    for (auto& kv : subst) {
+        Value cur = kv.second;
+        std::unordered_set<std::string> seen;
+        while (const auto* sr = std::get_if<SymReg>(&cur)) {
+            auto it = subst.find(sr->name);
+            if (it == subst.end() || seen.count(sr->name)) break;
+            seen.insert(sr->name);
+            cur = it->second;
+        }
+        kv.second = cur;
+    }
+}
+
 } // namespace
 
 CFGFunction CFGRecovery::recover(const SegmentOracle& oracle,
@@ -76,14 +101,21 @@ CFGFunction CFGRecovery::recover(const SegmentOracle& oracle,
 
         const uint32_t bid = vpc_to_block[vpc];
 
-        // State that drives evaluation of this block: the first edge that
-        // reached it (a forward edge), or the seed state for the entry block.
+        // State that drives evaluation of this block. In full-SSA mode each
+        // tracked register gets a unique symbolic entry value (reg@bbN), later
+        // rewritten to the phi result. Otherwise we use the first incoming edge
+        // (forward edge), or the seed state for the entry block.
         VMState drive_state;
-        auto inc_it = incoming.find(bid);
-        if (inc_it != incoming.end() && !inc_it->second.empty())
-            drive_state = inc_it->second.front().state;
-        else if (bid == entry_id)
-            drive_state = initial_state;
+        if (config.full_ssa && !config.tracked_regs.empty()) {
+            for (const auto& r : config.tracked_regs)
+                drive_state.regs[r] = SymReg(r + "@bb" + std::to_string(bid));
+        } else {
+            auto inc_it = incoming.find(bid);
+            if (inc_it != incoming.end() && !inc_it->second.empty())
+                drive_state = inc_it->second.front().state;
+            else if (bid == entry_id)
+                drive_state = initial_state;
+        }
 
         SegmentResult res = oracle(vpc, drive_state);
 
@@ -184,6 +216,45 @@ CFGFunction CFGRecovery::recover(const SegmentOracle& oracle,
             phi.reg = reg;
             phi.incoming = std::move(pairs);
             bb.phis.push_back(std::move(phi));
+        }
+    }
+
+    // --- Full-SSA rewrite ---
+    // Replace each block's symbolic entry value (reg@bbN) with its definition:
+    // the phi result if one exists, else the single incoming value, else the
+    // function input. This wires block IR to phi results and closes loop
+    // def-use chains, turning the structural phi graph into real SSA.
+    if (config.full_ssa && !config.tracked_regs.empty()) {
+        std::unordered_map<std::string, Value> subst;
+        for (auto& bb : cfg.blocks) {
+            for (const auto& r : config.tracked_regs) {
+                std::string sym = r + "@bb" + std::to_string(bb.id);
+                Value target = SymReg(r); // default: clean function input
+                const PhiNode* phi = nullptr;
+                for (auto& p : bb.phis)
+                    if (p.reg == r) { phi = &p; break; }
+                if (phi) {
+                    target = InstrRef(phi->result_id);
+                } else if (bb.id == entry_id) {
+                    if (const Value* iv = initial_state.find(r)) target = *iv;
+                } else {
+                    auto it = incoming.find(bb.id);
+                    if (it != incoming.end() && !it->second.empty())
+                        if (const Value* iv = it->second.front().state.find(r))
+                            target = *iv;
+                }
+                subst[sym] = target;
+            }
+        }
+        resolve_subst(subst);
+
+        for (auto& bb : cfg.blocks) {
+            for (auto& in : bb.instrs)
+                for (auto& op : in.operands) op = apply_subst(op, subst);
+            for (auto& phi : bb.phis)
+                for (auto& inc : phi.incoming) inc.second = apply_subst(inc.second, subst);
+            if (bb.term.condition)
+                bb.term.condition = apply_subst(*bb.term.condition, subst);
         }
     }
 
