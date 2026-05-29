@@ -77,6 +77,19 @@ SegmentRun lift_and_optimize_segment(
 CFGFunction recover_native_cfg(
     const uint8_t* image, size_t image_len, uint64_t base,
     uint64_t entry_va, int max_blocks = 4096);
+
+/// Recover a multi-path VM control-flow graph by devirtualization. Drives a
+/// resumable GuidedEvaluator: the entry segment runs to the first VJCC/VMEXIT;
+/// each virtual conditional jump's two next-VPCs are recovered via
+/// extract_vjcc_targets, and each arm is explored by re-entering the dispatcher
+/// with that VPC injected. Blocks are keyed by VPC value; conditional arms
+/// become CJMP terminators. `safe_ranges` are the VM bytecode regions that may
+/// be constant-promoted (VA start,end pairs).
+CFGFunction recover_vm_cfg(
+    const uint8_t* image, size_t image_len, uint64_t base,
+    const std::string& vpc_reg, uint64_t entry_va,
+    const std::vector<std::pair<uint64_t, uint64_t>>& safe_ranges,
+    int max_blocks = 4096);
 #endif
 
 } // namespace deobf

@@ -1,9 +1,13 @@
 #include "deobf/segment_eval.h"
 #include "deobf/cfg_recovery.h"
+#include "deobf/evaluator.h"
 #include "deobf/passes.h"
 #include "deobf/lifter.h"
 
 #include <algorithm>
+#include <deque>
+#include <map>
+#include <sstream>
 #include <unordered_set>
 
 #ifdef DEOBF_HAS_CAPSTONE
@@ -341,6 +345,172 @@ CFGFunction recover_native_cfg(const uint8_t* image, size_t image_len, uint64_t 
 
         if (discovered.size() == leaders.size()) break; // fixpoint reached
         leaders.swap(discovered);
+    }
+
+    return cfg;
+}
+
+// --- Multi-path VM CFG recovery (devirtualization) ---
+
+namespace {
+
+// Append `src` instructions into `dst`, remapping result_ids to a fresh global
+// range starting at *next_id, and remapping intra-segment InstrRef operands.
+// Returns old_id -> new_id so callers can fix external references (terminator
+// conditions). Keeps each block's IR globally unique across segments.
+std::unordered_map<uint32_t, uint32_t>
+append_renumbered(std::vector<Instruction>& dst,
+                  const std::vector<Instruction>& src, uint32_t& next_id) {
+    std::unordered_map<uint32_t, uint32_t> idmap;
+    idmap.reserve(src.size());
+    for (const auto& in : src) idmap[in.result_id] = next_id++;
+    for (const auto& in : src) {
+        Instruction ni = in;
+        ni.result_id = idmap[in.result_id];
+        for (auto& op : ni.operands) {
+            if (const auto* r = get_instrref(op)) {
+                auto it = idmap.find(r->id);
+                if (it != idmap.end()) op = Value(InstrRef(it->second));
+            }
+        }
+        dst.push_back(std::move(ni));
+    }
+    return idmap;
+}
+
+Value remap_value(const Value& v, const std::unordered_map<uint32_t, uint32_t>& idmap) {
+    if (const auto* r = get_instrref(v)) {
+        auto it = idmap.find(r->id);
+        if (it != idmap.end()) return Value(InstrRef(it->second));
+    }
+    return v;
+}
+
+std::string vpc_lbl(uint64_t vpc) {
+    std::ostringstream os;
+    os << "vpc_0x" << std::hex << vpc;
+    return os.str();
+}
+
+struct VmSegment {
+    enum Kind { Ret, Branch, Unresolved } kind = Unresolved;
+    std::vector<Instruction> instrs;
+    uint64_t dispatcher_va = 0;
+    std::optional<Value> condition;
+    std::optional<uint64_t> vpc_taken;
+    std::optional<uint64_t> vpc_not_taken;
+};
+
+VmSegment run_vm_segment(const uint8_t* image, size_t image_len, uint64_t base,
+                         const std::string& vpc_reg, uint64_t start_va,
+                         const std::unordered_map<std::string, Value>& inject,
+                         const std::vector<std::pair<uint64_t, uint64_t>>& safe_ranges,
+                         int max_steps, int max_vm_insns) {
+    VmSegment seg;
+    GuidedEvaluator ev(image, image_len, base, vpc_reg);
+    for (const auto& [s, e] : safe_ranges) ev.add_safe_range(s, e);
+    if (!inject.empty()) ev.set_initial_regs(inject);
+
+    auto rep = ev.run(start_va, max_steps, max_vm_insns);
+    seg.instrs = ev.func().instrs;
+    seg.dispatcher_va = rep.stop_va;
+
+    if (rep.result == EvalResult::VMEXIT_RET || rep.result == EvalResult::RET) {
+        seg.kind = VmSegment::Ret;
+        return seg;
+    }
+    if (rep.result == EvalResult::UNRESOLVED_TARGET) {
+        // A VJCC manifests as a SELECT (cmov/setcc) feeding the dispatch VPC.
+        const Instruction* sel = nullptr;
+        for (const auto& in : ev.func().instrs)
+            if (in.op == Op::SELECT) sel = &in;
+        if (sel && sel->operands.size() == 3) {
+            auto tg = extract_vjcc_targets(ev.func(), sel->ref(), sel->operands[0]);
+            if (tg) {
+                seg.kind = VmSegment::Branch;
+                seg.condition = sel->operands[0];
+                seg.vpc_taken = tg->first;
+                seg.vpc_not_taken = tg->second;
+                return seg;
+            }
+        }
+    }
+    seg.kind = VmSegment::Unresolved;
+    return seg;
+}
+
+} // namespace
+
+CFGFunction recover_vm_cfg(const uint8_t* image, size_t image_len, uint64_t base,
+                           const std::string& vpc_reg, uint64_t entry_va,
+                           const std::vector<std::pair<uint64_t, uint64_t>>& safe_ranges,
+                           int max_blocks) {
+    CFGFunction cfg("vm");
+    std::map<uint64_t, uint32_t> vpc_to_block;
+    uint32_t next_id = 1;
+    uint64_t dispatcher_va = 0;
+
+    auto get_block = [&](uint64_t vpc, const std::string& label) -> uint32_t {
+        auto it = vpc_to_block.find(vpc);
+        if (it != vpc_to_block.end()) return it->second;
+        auto& bb = cfg.add_block(label);
+        bb.term.kind = TermKind::UNREACHABLE;
+        vpc_to_block[vpc] = bb.id;
+        return bb.id;
+    };
+
+    const uint64_t ENTRY_KEY = entry_va; // synthetic VPC key for the entry block
+    uint32_t entry_bid = get_block(ENTRY_KEY, "entry");
+    cfg.entry_block = entry_bid;
+
+    struct WL {
+        uint64_t key;
+        uint64_t start_va;
+        std::unordered_map<std::string, Value> inject;
+        uint32_t bid;
+    };
+    std::deque<WL> wl;
+    wl.push_back({ENTRY_KEY, entry_va, {}, entry_bid});
+    std::unordered_set<uint64_t> processed;
+
+    while (!wl.empty() && static_cast<int>(cfg.blocks.size()) <= max_blocks) {
+        WL w = wl.front();
+        wl.pop_front();
+        if (processed.count(w.key)) continue;
+        processed.insert(w.key);
+
+        VmSegment seg = run_vm_segment(image, image_len, base, vpc_reg, w.start_va,
+                                       w.inject, safe_ranges, 50000, 2000);
+        if (dispatcher_va == 0 && seg.dispatcher_va) dispatcher_va = seg.dispatcher_va;
+
+        // Materialise successor blocks first (may grow cfg.blocks), then assemble.
+        Terminator term;
+        if (seg.kind == VmSegment::Ret) {
+            term.kind = TermKind::RET;
+        } else if (seg.kind == VmSegment::Branch && seg.vpc_taken && seg.vpc_not_taken) {
+            bool tback = processed.count(*seg.vpc_taken) > 0;
+            bool fback = processed.count(*seg.vpc_not_taken) > 0;
+            uint32_t t = get_block(*seg.vpc_taken, vpc_lbl(*seg.vpc_taken));
+            uint32_t f = get_block(*seg.vpc_not_taken, vpc_lbl(*seg.vpc_not_taken));
+            cfg.add_edge(w.bid, t, tback);
+            cfg.add_edge(w.bid, f, fback);
+            term.kind = TermKind::CJMP;
+            term.target = t;
+            term.fallthrough = f;
+            if (!processed.count(*seg.vpc_taken))
+                wl.push_back({*seg.vpc_taken, dispatcher_va,
+                              {{vpc_reg, Const(*seg.vpc_taken)}}, t});
+            if (!processed.count(*seg.vpc_not_taken))
+                wl.push_back({*seg.vpc_not_taken, dispatcher_va,
+                              {{vpc_reg, Const(*seg.vpc_not_taken)}}, f});
+        } else {
+            term.kind = TermKind::UNREACHABLE;
+        }
+
+        BasicBlock* bb = cfg.block_by_id(w.bid);
+        auto idmap = append_renumbered(bb->instrs, seg.instrs, next_id);
+        if (seg.condition) term.condition = remap_value(*seg.condition, idmap);
+        bb->term = std::move(term);
     }
 
     return cfg;

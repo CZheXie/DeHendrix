@@ -142,6 +142,61 @@ static void test_threaded_vm_vjcc() {
     }
 }
 
+// Build the diamond VJCC VM image used by the recovery test.
+static std::vector<uint8_t> build_vjcc_vm() {
+    std::vector<uint8_t> img(0x4000, 0xCC);
+    put(img, 0x1000, {0x49,0xBB,0x00,0x30,0x00,0x40,0x01,0x00,0x00,0x00}); // movabs r11, 0x140003000
+    put(img, 0x100A, {0x49,0x8B,0x03});                                    // mov rax,[r11]
+    put(img, 0x100D, {0x49,0x83,0xC3,0x08});                               // add r11, 8
+    put(img, 0x1011, {0xFF,0xE0});                                         // jmp rax
+    put(img, 0x1200, {0xC3});                                              // handler_exit: ret
+    put(img, 0x1300, {0x48,0x85,0xDB});                                    // test rbx, rbx
+    put(img, 0x1303, {0x48,0xB8,0x10,0x30,0x00,0x40,0x01,0x00,0x00,0x00}); // movabs rax, 0x140003010
+    put(img, 0x130D, {0x48,0xB9,0x20,0x30,0x00,0x40,0x01,0x00,0x00,0x00}); // movabs rcx, 0x140003020
+    put(img, 0x1317, {0x48,0x0F,0x45,0xC1});                               // cmovne rax, rcx
+    put(img, 0x131B, {0x49,0x89,0xC3});                                    // mov r11, rax
+    put(img, 0x131E, {0xE9,0xE7,0xFC,0xFF,0xFF});                          // jmp dispatcher
+    put_qword(img, 0x3000, 0x140001300);
+    put_qword(img, 0x3010, 0x140001200);
+    put_qword(img, 0x3020, 0x140001200);
+    return img;
+}
+
+// End-to-end: recover a multi-block VM CFG (devirtualization) from the diamond.
+static void test_recover_vm_cfg() {
+    auto img = build_vjcc_vm();
+    std::vector<std::pair<uint64_t, uint64_t>> safe = {{0x140003000, 0x140003028}};
+    CFGFunction cfg = recover_vm_cfg(img.data(), img.size(), 0x140000000,
+                                     "r11", 0x140001000, safe);
+
+    CHECK(cfg.blocks.size() == 3);
+
+    const BasicBlock* entry = cfg.block_by_id(cfg.entry_block);
+    CHECK(entry != nullptr);
+    if (entry) CHECK(entry->term.kind == TermKind::CJMP);
+
+    int rets = 0, cjmps = 0;
+    for (auto& bb : cfg.blocks) {
+        if (bb.term.kind == TermKind::RET) ++rets;
+        if (bb.term.kind == TermKind::CJMP) ++cjmps;
+    }
+    CHECK(cjmps == 1);
+    CHECK(rets == 2);
+    CHECK(cfg.edges.size() == 2);
+
+    // both VJCC arms must have become their own blocks
+    bool arm_t = false, arm_f = false;
+    for (auto& bb : cfg.blocks) {
+        if (bb.label == "vpc_0x140003010") arm_t = true;
+        if (bb.label == "vpc_0x140003020") arm_f = true;
+    }
+    CHECK(arm_t && arm_f);
+
+    std::cout << "  ok: recovered multi-block VM CFG ("
+              << cfg.blocks.size() << " blocks, " << cfg.edges.size() << " edges, 1 VJCC)\n";
+    std::cout << cfg.dump() << "\n";
+}
+
 #endif // DEOBF_HAS_CAPSTONE
 
 int main() {
@@ -149,6 +204,7 @@ int main() {
 #ifdef DEOBF_HAS_CAPSTONE
     test_threaded_vm();
     test_threaded_vm_vjcc();
+    test_recover_vm_cfg();
 #else
     std::cout << "  (skipped: no capstone)\n";
 #endif
