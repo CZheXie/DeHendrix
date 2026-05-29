@@ -347,6 +347,7 @@ CFGFunction recover_native_cfg(const uint8_t* image, size_t image_len, uint64_t 
         leaders.swap(discovered);
     }
 
+    for (auto& bb : cfg.blocks) stack_rewrite_instrs(bb.instrs);
     return cfg;
 }
 
@@ -513,6 +514,7 @@ CFGFunction recover_vm_cfg(const uint8_t* image, size_t image_len, uint64_t base
         bb->term = std::move(term);
     }
 
+    for (auto& bb : cfg.blocks) stack_rewrite_instrs(bb.instrs);
     return cfg;
 }
 

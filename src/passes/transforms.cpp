@@ -476,26 +476,29 @@ bool dead_dep_analysis_pass(Function& f,
 
 // --- pass 9: stack pointer rewrite (concrete stack → RSP-relative) ---
 
-bool stack_rewrite_pass(Function& f, uint64_t init_rsp) {
+bool stack_rewrite_instrs(std::vector<Instruction>& instrs, uint64_t init_rsp) {
     bool changed = false;
 
-    for (auto& instr : f.instrs) {
+    for (auto& instr : instrs) {
         if (instr.op != Op::LOAD && instr.op != Op::STORE) continue;
         if (instr.operands.empty()) continue;
 
         auto* addr = get_const(instr.operands[0]);
         if (!addr) continue;
 
-        // Check if address is in reasonable stack range (init_rsp - 0x10000 to init_rsp + 0x100)
+        // Address in a reasonable stack window (init_rsp - 0x10000 .. init_rsp + 0x100)
         int64_t offset = static_cast<int64_t>(addr->value) - static_cast<int64_t>(init_rsp);
         if (offset >= -0x10000 && offset <= 0x100) {
-            // Rewrite: replace constant address with annotation
             instr.annotations["stack_offset"] = std::to_string(offset);
             instr.annotations["rsp_relative"] = "1";
             changed = true;
         }
     }
     return changed;
+}
+
+bool stack_rewrite_pass(Function& f, uint64_t init_rsp) {
+    return stack_rewrite_instrs(f.instrs, init_rsp);
 }
 
 // --- convergence driver ---

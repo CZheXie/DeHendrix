@@ -33,9 +33,14 @@ std::unordered_set<std::string> dead_dep_analysis(
 bool dead_dep_analysis_pass(Function& f,
                             const std::unordered_set<std::string>& live_regs);
 
-/// Rewrites concrete stack addresses back to RSP-relative form.
-/// `init_rsp` is the concrete RSP value used at the start of lifting.
+/// Rewrites concrete stack addresses back to RSP-relative form (annotates
+/// LOAD/STORE with stack_offset + rsp_relative). `init_rsp` is the concrete RSP
+/// value used at the start of lifting.
 bool stack_rewrite_pass(Function& f, uint64_t init_rsp = 0x7FFFFFFFD000ULL);
+
+/// Same rewrite over a raw instruction vector (e.g. a recovered CFG block).
+bool stack_rewrite_instrs(std::vector<Instruction>& instrs,
+                          uint64_t init_rsp = 0x7FFFFFFFD000ULL);
 
 struct ConvergenceReport {
     int iterations;
