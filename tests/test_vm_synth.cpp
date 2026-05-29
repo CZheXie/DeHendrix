@@ -1,4 +1,5 @@
 #include "deobf/evaluator.h"
+#include "deobf/segment_eval.h"
 #include "deobf/ir.h"
 
 #include <cstdint>
@@ -73,12 +74,65 @@ static void test_threaded_vm() {
         std::cout << "  ok: traversed [add,add,exit] -> VMEXIT at handler 0x140001200\n";
 }
 
+// Same VM but the first bytecode op is a cmov-based virtual conditional jump
+// (VJCC) that selects the next VPC from a flag. The engine traverses to the
+// VJCC; extract_vjcc_targets must recover BOTH next-VPC values from the real
+// execution trace.
+static void test_threaded_vm_vjcc() {
+    std::vector<uint8_t> img(0x4000, 0xCC);
+
+    // entry + dispatcher
+    put(img, 0x1000, {0x49,0xBB,0x00,0x30,0x00,0x40,0x01,0x00,0x00,0x00}); // movabs r11, 0x140003000
+    put(img, 0x100A, {0x49,0x8B,0x03});                                    // mov rax,[r11]
+    put(img, 0x100D, {0x49,0x83,0xC3,0x08});                               // add r11, 8
+    put(img, 0x1011, {0xFF,0xE0});                                         // jmp rax
+
+    put(img, 0x1200, {0xC3});                                              // handler_exit: ret
+
+    // handler_vjcc: r11 = (rbx != 0) ? 0x140003020 : 0x140003010 ; jmp dispatcher
+    put(img, 0x1300, {0x48,0x85,0xDB});                                    // test rbx, rbx
+    put(img, 0x1303, {0x48,0xB8,0x10,0x30,0x00,0x40,0x01,0x00,0x00,0x00}); // movabs rax, 0x140003010
+    put(img, 0x130D, {0x48,0xB9,0x20,0x30,0x00,0x40,0x01,0x00,0x00,0x00}); // movabs rcx, 0x140003020
+    put(img, 0x1317, {0x48,0x0F,0x45,0xC1});                               // cmovne rax, rcx
+    put(img, 0x131B, {0x49,0x89,0xC3});                                    // mov r11, rax
+    put(img, 0x131E, {0xE9,0xE7,0xFC,0xFF,0xFF});                          // jmp 0x14000100A
+
+    put_qword(img, 0x3000, 0x140001300); // op0 = vjcc
+    put_qword(img, 0x3010, 0x140001200); // taken arm bytecode -> exit
+    put_qword(img, 0x3020, 0x140001200); // not-taken arm bytecode -> exit
+
+    GuidedEvaluator ev(img.data(), img.size(), 0x140000000, "r11");
+    ev.add_safe_range(0x140003000, 0x140003028);
+    auto rep = ev.run(0x140001000, 5000, 50);
+    std::cout << "  result=" << eval_result_name(rep.result)
+              << " (expect UNRESOLVED_TARGET at the VJCC dispatch)\n";
+
+    // Find the SELECT produced by the cmov in the recovered IR.
+    const Function& f = ev.func();
+    const Instruction* sel = nullptr;
+    for (auto& in : f.instrs) if (in.op == Op::SELECT) sel = &in;
+    CHECK(sel != nullptr);
+    if (sel) {
+        auto tg = extract_vjcc_targets(f, sel->ref(), sel->operands[0]);
+        CHECK(tg.has_value());
+        if (tg) {
+            uint64_t a = tg->first, b = tg->second;
+            bool ok = (a == 0x140003010 && b == 0x140003020) ||
+                      (a == 0x140003020 && b == 0x140003010);
+            CHECK(ok);
+            std::cout << "  ok: VM cmov-VJCC -> next VPCs {0x" << std::hex
+                      << a << ", 0x" << b << "}" << std::dec << "\n";
+        }
+    }
+}
+
 #endif // DEOBF_HAS_CAPSTONE
 
 int main() {
     std::cout << "=== libdeobf synthetic threaded-code VM ===\n";
 #ifdef DEOBF_HAS_CAPSTONE
     test_threaded_vm();
+    test_threaded_vm_vjcc();
 #else
     std::cout << "  (skipped: no capstone)\n";
 #endif
